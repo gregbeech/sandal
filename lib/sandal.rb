@@ -4,8 +4,8 @@ require 'openssl'
 
 module Sandal
 
-  # Creates a signed token.
-  def self.signed_token(header, payload, private_key = nil)
+  # Creates a token, signing it if specified in the header.
+  def self.encode_token(header, payload, private_key = nil)
     algorithm = header['alg']
     throw ArgumentError.new('The header must contain an "alg" parameter.') unless algorithm
     throw ArgumentError.new('The header cannot contain an "enc" parameter.') if header['enc']
