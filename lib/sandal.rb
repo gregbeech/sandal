@@ -7,11 +7,12 @@ module Sandal
   # Creates a token, signing it if specified in the header.
   def self.encode_token(header, payload, private_key = nil)
     algorithm = header['alg']
-    throw ArgumentError.new('The header must contain an "alg" parameter.') unless algorithm
+    throw ArgumentError.new('A private key was supplied, but the header contains no "alg" parameter.') if private_key && !algorithm
     throw ArgumentError.new('The header cannot contain an "enc" parameter.') if header['enc']
 
     encoded_header = base64_encode(JSON.generate(header))
-    secured_input = [encoded_header, payload].join('.')
+    encoded_payload = base64_encode(payload)
+    secured_input = [encoded_header, encoded_payload].join('.')
 
     case algorithm
     when 'ES256', 'ES384', 'ES512'
@@ -22,7 +23,7 @@ module Sandal
       throw ArgumentError.new('A private key must be supplied for RS* signing algorithms.') unless private_key
       digest = OpenSSL::Digest.new(algorithm.sub('RS', 'SHA'))
       signature = private_key.sign(digest, secured_input)
-    when 'none'
+    when 'none', nil
       signature = ''
     else
       throw NotImplementedError.new("The #{algorithm} signing algorithm is not supported.")
@@ -33,7 +34,7 @@ module Sandal
   end
 
   # Creates an encrypted token.
-  def self.encrypted_token(header, payload, public_key)
+  def self.encrypt_token(header, payload, public_key)
     algorithm = header['alg']
     encryption = header['enc']
     throw ArgumentError.new('The header must contain an "alg" parameter.') unless algorithm
@@ -52,18 +53,20 @@ module Sandal
       content_master_key = cipher.random_key
       iv = cipher.random_iv
 
+      digest = OpenSSL::Digest.new("SHA#{sha_length}")
+
       encrypted_key = public_key.public_encrypt(content_master_key)
       encoded_encrypted_key = base64_encode(encrypted_key)
       encoded_iv = base64_encode(iv)
 
-      content_encryption_key = derive_content_key('Encryption', content_master_key, encryption, aes_length)
-      content_integrity_key = derive_content_key('Integrity', content_master_key, encryption, sha_length)
+      cipher.key = derive_content_key('Encryption', content_master_key, encryption, digest, aes_length)
+      content_integrity_key = derive_content_key('Integrity', content_master_key, encryption, digest, sha_length)
 
       ciphertext = cipher.update(payload) + cipher.final
       encoded_ciphertext = base64_encode(ciphertext)
 
       secured_input = [encoded_header, encoded_encrypted_key, encoded_iv, encoded_ciphertext].join('.')
-      integrity_value = OpenSSL::Digest.digest("SHA#{sha_length}", secured_input)
+      integrity_value = OpenSSL::HMAC.digest(digest, content_integrity_key, secured_input)
       encoded_integrity_value = base64_encode(integrity_value)
 
       [secured_input, encoded_integrity_value].join('.')
@@ -130,17 +133,22 @@ module Sandal
       aes_length = Integer(encryption[1..3])
       sha_length = Integer(encryption[-3..-1])
 
-      secured_input = parts.take(4).join('.')
-      computed_integrity_value = OpenSSL::Digest.digest("SHA#{sha_length}", secured_input)
-      throw ArgumentError.new('Invalid signature.') unless integrity_value == computed_integrity_value
+      digest = OpenSSL::Digest.new("SHA#{sha_length}")
 
       private_key = key_finder.call(header)
       throw SecurityError.new('No key was found to decrypt the content master key.') unless private_key
       content_master_key = private_key.private_decrypt(encrypted_key)
 
+      content_encryption_key = derive_content_key('Encryption', content_master_key, encryption, digest, aes_length)
+      content_integrity_key = derive_content_key('Integrity', content_master_key, encryption, digest, sha_length)
+
+      secured_input = parts.take(4).join('.')
+      computed_integrity_value = OpenSSL::HMAC.digest(digest, content_integrity_key, secured_input)
+      throw ArgumentError.new('Invalid signature.') unless integrity_value == computed_integrity_value
+
       cipher = OpenSSL::Cipher.new("AES-#{aes_length}-CBC")
       cipher.decrypt
-      cipher.key = content_master_key
+      cipher.key = content_encryption_key
       cipher.iv = iv
       cipher.update(ciphertext) + cipher.final
     when 'A128GCM', 'A256GCM'
@@ -149,6 +157,8 @@ module Sandal
       throw NotImplementedError.new("The #{algorithm} encryption algorithm is not supported.")
     end
   end
+
+  private
 
   # Base64 encodes a string, in compliance with the JWT specification.
   def self.base64_encode(s)
@@ -162,17 +172,15 @@ module Sandal
     Base64.urlsafe_decode64(s + padding)
   end
 
-  private
-
   # Derives content keys using the Concat KDF.
-  def self.derive_content_key(label, content_master_key, encryption, size)
+  def self.derive_content_key(label, content_master_key, encryption, digest, size)
     round_number = [1].pack('N')
     output_size = [size].pack('N')
     enc_bytes = encryption.encode('utf-8').bytes.to_a.pack('C*')
     epu = epv = [0].pack('N')
     label_bytes = label.encode('us-ascii').bytes.to_a.pack('C*')
     hash_input = round_number + content_master_key + output_size + enc_bytes + epu + epv + label_bytes
-    hash = OpenSSL::Digest.digest('SHA256', hash_input)
+    hash = digest.digest(hash_input)
     hash[0..((size / 8) - 1)]
   end
 
@@ -189,19 +197,18 @@ if __FILE__ == $0
     iat: issued_at.to_i,
     exp: (issued_at + 3600).to_i
   })
-  encoded_claims = Sandal.base64_encode(claims)
 
   # sign and encrypt
   jws_key = OpenSSL::PKey::RSA.new(2048)
-  jws_token = Sandal.signed_token({ 'alg' => 'RS256' }, encoded_claims, jws_key)
+  jws_token = Sandal.encode_token({ 'alg' => 'RS256' }, claims.to_s, jws_key)
   jwe_key = OpenSSL::PKey::RSA.new(2048)
-  jwe_token = Sandal.encrypted_token({ 'alg' => 'RSA1_5', 'enc' => 'A128CBC+HS256', 'cty' => 'JWT' }, jws_token, jwe_key)
+  jwe_token = Sandal.encrypt_token({ 'alg' => 'RSA1_5', 'enc' => 'A128CBC+HS256', 'cty' => 'JWT' }, jws_token, jwe_key)
 
   puts jwe_token
 
   jws_token_2 = Sandal.decrypt_token(jwe_token) { |header| jwe_key }
-  claims = Sandal.decode_token(jws_token_2) { |header| jws_key }
+  roundtrip_claims = Sandal.decode_token(jws_token_2) { |header| jws_key }
 
-  puts claims
+  puts roundtrip_claims
 
 end
