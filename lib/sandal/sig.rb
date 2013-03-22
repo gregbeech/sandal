@@ -6,12 +6,12 @@ module Sandal
     attr_reader :name
 
     # Signs data and returns the signature.
-    def sign(data)
+    def sign(payload)
       throw NotImplementedError.new("#{@name}.sign is not implemented.")
     end
 
     # Verifies a signature and returns whether the signature matches.
-    def verify(signature, data)
+    def verify(signature, payload)
       throw NotImplementedError.new("#{@name}.verify is not implemented.")
     end
 
@@ -25,12 +25,12 @@ module Sandal
       end
 
       # Returns an empty signature.
-      def sign(data)
+      def sign(payload)
         ''
       end
 
       # Verifies that the signature is empty.
-      def verify(signature, data)
+      def verify(signature, payload)
         signature.nil? || signature.length == 0
       end
 

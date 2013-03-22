@@ -7,25 +7,26 @@ module Sandal
     class RS
       include Sandal::Sig
 
-      # Creates a new instance with the size of the SHA algorithm and an OpenSSL PKey. To sign
+      # Creates a new instance with the size of the SHA algorithm and an OpenSSL RSA PKey. To sign
       # a value this must contain a private key; to verify a signature a public key is sufficient.
+      # Note that the size of the RSA key must be at least 2048 bits to be compliant with the
+      # JWA specification.
       def initialize(sha_size, key)
         throw ArgumentError.new('A key is required.') unless key
-
         @name = "RS#{sha_size}"
         @digest = OpenSSL::Digest.new("SHA#{sha_size}")
         @key = key
       end
 
       # Signs data and returns the signature.
-      def sign(data)
-        throw ArgumentError.new('A private key is required to sign a message.') unless @key.private?
-        @key.sign(@digest, data)
+      def sign(payload)
+        throw ArgumentError.new('A private key is required to sign the payload.') unless @key.private?
+        @key.sign(@digest, payload)
       end
 
       # Verifies a signature and returns whether the signature matches.
-      def verify(signature, data)
-        @key.verify(@digest, signature, data)
+      def verify(signature, payload)
+        @key.verify(@digest, signature, payload)
       end
 
     end

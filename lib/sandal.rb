@@ -6,6 +6,7 @@ require 'openssl'
 
 require 'sandal/version'
 require 'sandal/sig'
+require 'sandal/enc'
 
 # A library for creating and reading JSON Web Tokens (JWT).
 module Sandal
@@ -18,7 +19,7 @@ module Sandal
     sig ||= Sandal::Sig::None.new
 
     header = {}
-    header['sig'] = sig.name if sig.name != 'none'
+    header['alg'] = sig.name if sig.name != 'none'
     header = header_fields.merge(header) if header_fields
 
     encoded_header = base64_encode(JSON.generate(header))
@@ -31,79 +32,34 @@ module Sandal
   end
 
   # Creates an encrypted token.
-  def self.encrypt_token(header, payload, public_key)
-    algorithm = header['alg']
-    encryption = header['enc']
-    throw ArgumentError.new('The header must contain an "alg" parameter.') unless algorithm
-    throw ArgumentError.new('The header must contain an "enc" parameter.') unless encryption
-    throw ArgumentError.new('A public key is required.') unless public_key
+  def self.encrypt_token(payload, enc, header_fields = nil)
+    header = {}
+    header['enc'] = enc.name
+    header['alg'] = enc.alg_name
+    header = header_fields.merge(header) if header_fields
 
-    encoded_header = base64_encode(JSON.generate(header))
-
-    case encryption 
-    when 'A128CBC+HS256', 'A256CBC+HS512'
-      aes_length = Integer(encryption[1..3])
-      sha_length = Integer(encryption[-3..-1])
-
-      cipher = OpenSSL::Cipher.new("AES-#{aes_length}-CBC")
-      cipher.encrypt
-      content_master_key = cipher.random_key
-      iv = cipher.random_iv
-
-      digest = OpenSSL::Digest.new("SHA#{sha_length}")
-
-      encrypted_key = public_key.public_encrypt(content_master_key)
-      encoded_encrypted_key = base64_encode(encrypted_key)
-      encoded_iv = base64_encode(iv)
-
-      cipher.key = derive_content_key('Encryption', content_master_key, encryption, digest, aes_length)
-      content_integrity_key = derive_content_key('Integrity', content_master_key, encryption, digest, sha_length)
-
-      ciphertext = cipher.update(payload) + cipher.final
-      encoded_ciphertext = base64_encode(ciphertext)
-
-      secured_input = [encoded_header, encoded_encrypted_key, encoded_iv, encoded_ciphertext].join('.')
-      integrity_value = OpenSSL::HMAC.digest(digest, content_integrity_key, secured_input)
-      encoded_integrity_value = base64_encode(integrity_value)
-
-      [secured_input, encoded_integrity_value].join('.')
-    when 'A128GCM', 'A256GCM'
-      throw NotImplementedError.new("The GCM family of encryption algorithms are not implemented yet.")
-    else
-      throw NotImplementedError.new("The #{algorithm} encryption algorithm is not supported.")
-    end
+    enc.encrypt(header, payload)
   end
 
   # Decodes a token, verifying the signature if present.
-  def self.decode_token(token, &key_finder)
+  def self.decode_token(token, &sig_finder)
     parts = token.split('.')
     throw ArgumentError.new('Invalid token format.') unless [2, 3].include?(parts.length)
     begin
       header = JSON.parse(base64_decode(parts[0]))
       payload = base64_decode(parts[1])
-      signature = if parts.length > 2 then base64_decode(parts[2]) else nil end
+      signature = if parts.length > 2 then base64_decode(parts[2]) else '' end
     rescue
       throw ArgumentError.new('Invalid token encoding.')
     end
 
     algorithm = header['alg']
     if algorithm && algorithm != 'none'
-      throw SecurityError.new('The signature is missing.') unless signature
-      case algorithm
-      when 'ES256', 'ES384', 'ES512'
-        throw NotImplementedError.new('The ES family of signing algorithms are not implemented yet.')
-      when 'HS256', 'HS384', 'HS512'
-        throw NotImplementedError.new('The HS family of signing algorithms are not implemented yet.')
-      when 'RS256', 'RS384', 'RS512'
-        throw ArgumentError.new("A key finder is required for the #{algorithm} signing algorithm.") unless key_finder
-        public_key = key_finder.call(header)
-        throw SecurityError.new('No key was found to verify the signature') unless public_key
-        digest = OpenSSL::Digest.new(algorithm.sub('RS', 'SHA'))
-        secured_input = parts.take(2).join('.')
-        throw ArgumentError.new('Invalid signature.') unless public_key.verify(digest, signature, secured_input)
-      else
-        throw NotImplementedError.new("The #{algorithm} signing algorithm is not supported.")
-      end
+      throw SecurityError.new('The signature is missing.') unless signature.length > 0
+      sig = sig_finder.call(header)
+      throw SecurityError.new('No signature verifier was found.') unless sig
+      secured_input = parts.take(2).join('.')
+      throw ArgumentError.new('Invalid signature.') unless sig.verify(signature, secured_input)
     end
 
     payload
@@ -151,7 +107,7 @@ module Sandal
     when 'A128GCM', 'A256GCM'
       throw NotImplementedError.new("The GCM family of encryption algorithms are not implemented yet.")
     else
-      throw NotImplementedError.new("The #{algorithm} encryption algorithm is not supported.")
+      throw NotImplementedError.new("The #{encryption} encryption algorithm is not supported.")
     end
   end
 
@@ -203,12 +159,13 @@ if __FILE__ == $0
   puts jws_token
 
   jwe_key = OpenSSL::PKey::RSA.new(2048)
-  jwe_token = Sandal.encrypt_token({ 'alg' => 'RSA1_5', 'enc' => 'A128CBC+HS256', 'cty' => 'JWT' }, jws_token, jwe_key)
+  enc = Sandal::Enc::AES128CBC.new(jwe_key.public_key)
+  jwe_token = Sandal.encrypt_token(jws_token, enc, { 'cty' => 'JWT' })
 
   puts jwe_token
 
   jws_token_2 = Sandal.decrypt_token(jwe_token) { |header| jwe_key }
-  roundtrip_claims = Sandal.decode_token(jws_token_2) { |header| jws_key }
+  roundtrip_claims = Sandal.decode_token(jws_token_2) { |header| Sandal::Sig::RS256.new(jws_key.public_key) }
 
   puts roundtrip_claims
 
