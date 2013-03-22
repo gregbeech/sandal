@@ -5,12 +5,12 @@ module Sandal
     # The JWA name of the algorithm.
     attr_reader :name
 
-    # Signs data and returns the signature.
+    # Signs a payload and returns the signature.
     def sign(payload)
       throw NotImplementedError.new("#{@name}.sign is not implemented.")
     end
 
-    # Verifies a signature and returns whether the signature matches.
+    # Verifies a payload signature and returns whether the signature matches.
     def verify(signature, payload)
       throw NotImplementedError.new("#{@name}.verify is not implemented.")
     end
@@ -39,4 +39,6 @@ module Sandal
   end
 end
 
+require 'sandal/sig/hs'
+require 'sandal/sig/rs'
 require 'sandal/sig/rs'

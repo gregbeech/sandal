@@ -18,13 +18,13 @@ module Sandal
         @key = key
       end
 
-      # Signs data and returns the signature.
+      # Signs a payload and returns the signature.
       def sign(payload)
         throw ArgumentError.new('A private key is required to sign the payload.') unless @key.private?
         @key.sign(@digest, payload)
       end
 
-      # Verifies a signature and returns whether the signature matches.
+      # Verifies a payload signature and returns whether the signature matches.
       def verify(signature, payload)
         @key.verify(@digest, signature, payload)
       end
@@ -33,7 +33,7 @@ module Sandal
 
     # The RSA-SHA256 signing algorithm.
     class RS256 < Sandal::Sig::RS
-      # Creates a new instance with an OpenSSL PKey.
+      # Creates a new instance with an OpenSSL RSA PKey.
       def initialize(key)
         super(256, key)
       end
@@ -41,7 +41,7 @@ module Sandal
 
     # The RSA-SHA384 signing algorithm.
     class RS384 < Sandal::Sig::RS
-      # Creates a new instance with an OpenSSL PKey.
+      # Creates a new instance with an OpenSSL RSA PKey.
       def initialize(key)
         super(384, key)
       end
@@ -49,7 +49,7 @@ module Sandal
 
     # The RSA-SHA512 signing algorithm.
     class RS512 < Sandal::Sig::RS
-      # Creates a new instance with an OpenSSL PKey.
+      # Creates a new instance with an OpenSSL RSA PKey.
       def initialize(key)
         super(512, key)
       end

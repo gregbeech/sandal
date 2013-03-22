@@ -1,7 +1,21 @@
 require 'base64'
 
 module Sandal
+  # Implements some JSON Web Algorithm helper functions.
   module JWA
+
+    # A timing independent string comparison function to protect against timing attacks. See 
+    # http://rdist.root.org/2009/05/28/timing-attack-in-google-keyczar-library/ for details.
+    def self.secure_compare(a, b)
+      if a.nil? && b.nil?
+        true
+      elsif a.nil? || b.nil? || a.bytesize != b.bytesize
+        false
+      else
+        result = a.bytes.zip(b.bytes).reduce(0) { |memo, (b1, b2)| memo |= b1 ^ b2 }
+        result == 0
+      end
+    end
 
     # Base64 encodes a string, in compliance with the JWT specification.
     def self.base64_encode(s)

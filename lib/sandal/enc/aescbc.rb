@@ -11,7 +11,7 @@ module Sandal
       def initialize(aes_size, key)
         throw ArgumentError.new('A key is required.') unless key
         @aes_size = aes_size
-        @sha_size = aes_size * 2
+        @sha_size = aes_size * 2 # TODO: Any smarter way to do this?
         @name = "A#{aes_size}CBC+HS#{@sha_size}"
         @alg_name = "RSA1_5" # TODO: From key?
         @cipher_name = "AES-#{aes_size}-CBC"
@@ -57,12 +57,14 @@ module Sandal
 
     end
 
+    # The AES-128-CBC encryption algorithm.
     class AES128CBC < Sandal::Enc::AESCBC
       def initialize(key)
         super(128, key)
       end
     end
 
+    # The AES-256-CBC encryption algorithm.
     class AES256CBC < Sandal::Enc::AESCBC
       def initialize(key)
         super(256, key)
