@@ -22,7 +22,7 @@ module Sandal
 
       # Verifies a payload signature and returns whether the signature matches.
       def verify(signature, payload)
-        Sandal::JWA.secure_compare(sign(payload), signature)
+        Sandal::Util.secure_equals(sign(payload), signature)
       end
 
     end

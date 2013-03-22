@@ -8,7 +8,7 @@ module Sandal
     # The JWA name of the algorithm.
     attr_reader :alg_name
 
-    # Encryptes a header and payload, and returns an encrypted token.
+    # Encrypts a header and payload, and returns an encrypted token.
     def encrypt(header, payload)
       throw NotImplementedError.new("#{@name}.encrypt is not implemented.")
     end

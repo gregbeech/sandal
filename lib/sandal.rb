@@ -151,6 +151,8 @@ if __FILE__ == $0
     exp: (issued_at + 3600).to_i
   })
 
+  puts claims.to_s
+
   # sign and encrypt
   jws_key = OpenSSL::PKey::RSA.new(2048)
   sig = Sandal::Sig::RS256.new(jws_key)

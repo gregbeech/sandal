@@ -1,5 +1,5 @@
 require 'openssl'
-require 'sandal/jwa'
+require 'sandal/util'
 
 module Sandal
   module Enc
@@ -21,22 +21,25 @@ module Sandal
 
       def encrypt(header, payload)
         cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
-        content_master_key = cipher.random_key
+        content_master_key = cipher.random_key # TODO: Check with the spec if this is long enough
         iv = cipher.random_iv
 
+        # TODO: Need to think about how this works with pre-shared symmetric keys - I'd originally thought
+        # this wouldn't be a common use case, but in cases where the recipient is also the issuer (e.g.
+        # an OAuth refresh token) then it would make a lot of sense.
         encrypted_key = @key.public_encrypt(content_master_key)
-        encoded_encrypted_key = Sandal::JWA.base64_encode(encrypted_key)
-        encoded_iv = Sandal::JWA.base64_encode(iv)
+        encoded_encrypted_key = Sandal::Util.base64_encode(encrypted_key)
+        encoded_iv = Sandal::Util.base64_encode(iv)
 
         cipher.key = derive_content_key('Encryption', content_master_key, @aes_size)
         ciphertext = cipher.update(payload) + cipher.final
-        encoded_ciphertext = Sandal::JWA.base64_encode(ciphertext)
+        encoded_ciphertext = Sandal::Util.base64_encode(ciphertext)
 
-        encoded_header = Sandal::JWA.base64_encode(JSON.generate(header))
+        encoded_header = Sandal::Util.base64_encode(JSON.generate(header))
         secured_input = [encoded_header, encoded_encrypted_key, encoded_iv, encoded_ciphertext].join('.')
         content_integrity_key = derive_content_key('Integrity', content_master_key, @sha_size)
         integrity_value = OpenSSL::HMAC.digest(@digest, content_integrity_key, secured_input)
-        encoded_integrity_value = Sandal::JWA.base64_encode(integrity_value)
+        encoded_integrity_value = Sandal::Util.base64_encode(integrity_value)
 
         [secured_input, encoded_integrity_value].join('.')
       end
