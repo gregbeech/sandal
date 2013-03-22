@@ -1,34 +1,30 @@
+$:.unshift('.')
+
 require 'base64'
 require 'json'
 require 'openssl'
 
+require 'sandal/version'
+require 'sandal/sig'
+
 module Sandal
 
-  # Creates a token, signing it if specified in the header.
-  def self.encode_token(header, payload, private_key = nil)
-    algorithm = header['alg']
-    throw ArgumentError.new('A private key was supplied, but the header contains no "alg" parameter.') if private_key && !algorithm
-    throw ArgumentError.new('The header cannot contain an "enc" parameter.') if header['enc']
+  # Creates a signed token.
+  def self.encode_token(payload, sig, header_fields = nil)
+    if header_fields && header_fields['enc']
+      throw ArgumentError.new('The header cannot contain an "enc" parameter.')
+    end
+    sig ||= Sandal::Sig::None.new
+
+    header = {}
+    header['sig'] = sig.name if sig.name != 'none'
+    header = header_fields.merge(header) if header_fields
 
     encoded_header = base64_encode(JSON.generate(header))
     encoded_payload = base64_encode(payload)
     secured_input = [encoded_header, encoded_payload].join('.')
 
-    case algorithm
-    when 'ES256', 'ES384', 'ES512'
-      throw NotImplementedError.new('The ES family of signing algorithms are not implemented yet.')
-    when 'HS256', 'HS384', 'HS512'
-      throw NotImplementedError.new('The HS family of signing algorithms are not implemented yet.')
-    when 'RS256', 'RS384', 'RS512'
-      throw ArgumentError.new('A private key must be supplied for RS* signing algorithms.') unless private_key
-      digest = OpenSSL::Digest.new(algorithm.sub('RS', 'SHA'))
-      signature = private_key.sign(digest, secured_input)
-    when 'none', nil
-      signature = ''
-    else
-      throw NotImplementedError.new("The #{algorithm} signing algorithm is not supported.")
-    end
-
+    signature = sig.sign(secured_input)
     encoded_signature = base64_encode(signature)
     [secured_input, encoded_signature].join('.')
   end
@@ -200,7 +196,11 @@ if __FILE__ == $0
 
   # sign and encrypt
   jws_key = OpenSSL::PKey::RSA.new(2048)
-  jws_token = Sandal.encode_token({ 'alg' => 'RS256' }, claims.to_s, jws_key)
+  sig = Sandal::Sig::RS256.new(jws_key)
+  jws_token = Sandal.encode_token(claims.to_s, sig)
+
+  puts jws_token
+
   jwe_key = OpenSSL::PKey::RSA.new(2048)
   jwe_token = Sandal.encrypt_token({ 'alg' => 'RSA1_5', 'enc' => 'A128CBC+HS256', 'cty' => 'JWT' }, jws_token, jwe_key)
 
