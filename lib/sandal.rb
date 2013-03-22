@@ -7,6 +7,7 @@ require 'openssl'
 require 'sandal/version'
 require 'sandal/sig'
 
+# A library for creating and reading JSON Web Tokens (JWT).
 module Sandal
 
   # Creates a signed token.
