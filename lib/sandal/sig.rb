@@ -41,4 +41,3 @@ end
 
 require 'sandal/sig/hs'
 require 'sandal/sig/rs'
-require 'sandal/sig/rs'
