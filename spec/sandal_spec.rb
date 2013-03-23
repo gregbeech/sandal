@@ -12,7 +12,7 @@ describe Sandal do
 
   it 'encodes and decodes tokens with "none" signature' do
     payload = 'Hello, World'
-    token = Sandal.encode_token(payload, Sandal::Sig::None.new)
+    token = Sandal.encode_token(payload, Sandal::Sig::None.instance)
     decoded_payload = Sandal.decode_token(token)
     decoded_payload.should == payload
   end

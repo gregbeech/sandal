@@ -1,3 +1,5 @@
+require 'singleton'
+
 module Sandal
   # Common signature traits.
   module Sig
@@ -18,6 +20,7 @@ module Sandal
     # The 'none' JWA signature method.
     class None
       include Sandal::Sig
+      include Singleton
 
       # Creates a new instance.
       def initialize

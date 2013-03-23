@@ -44,6 +44,19 @@ module Sandal
         [secured_input, encoded_integrity_value].join('.')
       end
 
+      def decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
+        content_master_key = @key.private_decrypt(encrypted_key)
+
+        content_integrity_key = derive_content_key('Integrity', content_master_key, @sha_size)
+        computed_integrity_value = OpenSSL::HMAC.digest(@digest, content_integrity_key, secured_input)
+        throw ArgumentError.new('Invalid signature.') unless integrity_value == computed_integrity_value
+
+        cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
+        cipher.key = derive_content_key('Encryption', content_master_key, @aes_size)
+        cipher.iv = iv
+        cipher.update(ciphertext) + cipher.final
+      end
+
       private
 
       # Derives content keys using the Concat KDF.

@@ -14,7 +14,7 @@ module Sandal
     end
 
     # Decrypts a token.
-    def decrypt(data)
+    def decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
       throw NotImplementedError.new("#{@name}.decrypt is not implemented.")
     end
 
@@ -22,3 +22,4 @@ module Sandal
 end
 
 require 'sandal/enc/aescbc'
+require 'sandal/enc/aesgcm'

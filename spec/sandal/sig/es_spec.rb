@@ -1,6 +1,5 @@
 # require 'helper'
 require 'openssl'
-require 'base64' # TODO: remove when working
 
 def make_bn(arr)
   hex_str = arr.pack('C*').unpack('H*')[0]
@@ -11,6 +10,16 @@ def make_point(group, x, y)
   str = '04' + x.to_s(16) + y.to_s(16)
   bn = OpenSSL::BN.new(str, 16)
   OpenSSL::PKey::EC::Point.new(group, bn)
+end
+
+def asn1_decode(signature)
+  asn1 = OpenSSL::ASN1.decode(signature)
+  return asn1.value[0].value, asn1.value[1].value
+end
+
+def asn1_encode(r, s)
+  items = [OpenSSL::ASN1::Integer.new(r), OpenSSL::ASN1::Integer.new(s)]
+  OpenSSL::ASN1::Sequence.new(items).to_der
 end
 
 # JWS A3.1 example
@@ -28,6 +37,16 @@ ec.private_key = d
 digest = OpenSSL::Digest::SHA256.new
 payload = 'eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ'
 
-# TODO: This doesn't seem right... :-S
 hash = digest.digest(payload)
-sig = ec.dsa_sign_asn1(hash) 
+signature = ec.dsa_sign_asn1(hash)
+r, s = asn1_decode(signature)
+p ec.dsa_verify_asn1(hash, asn1_encode(r, s))
+
+# also check the points from the example verify as expected
+r = make_bn([14, 209, 33, 83, 121, 99, 108, 72, 60, 47, 127, 21, 88, 7, 212, 2, 163, 178, 40, 3, 58, 249, 124, 126, 23, 129, 154, 195, 22, 158, 166, 101]  )
+s = make_bn([197, 10, 7, 211, 140, 60, 112, 229, 216, 241, 45, 175, 8, 74, 84, 128, 166, 101, 144, 197, 242, 147, 80, 154, 143, 63, 127, 138, 131, 163, 84, 213])
+p ec.dsa_verify_asn1(hash, asn1_encode(r, s))
+
+
+
+
