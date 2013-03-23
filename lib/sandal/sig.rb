@@ -42,5 +42,6 @@ module Sandal
   end
 end
 
+require 'sandal/sig/es'
 require 'sandal/sig/hs'
 require 'sandal/sig/rs'

@@ -40,12 +40,23 @@ payload = 'eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQog
 hash = digest.digest(payload)
 signature = ec.dsa_sign_asn1(hash)
 r, s = asn1_decode(signature)
+enc_sig = [r.to_s(16) + s.to_s(16)].pack('H*')
+p enc_sig
+r = OpenSSL::BN.new(enc_sig[0..31].unpack('H*')[0], 16)
+s = OpenSSL::BN.new(enc_sig[32..64].unpack('H*')[0], 16)
+
+
 p ec.dsa_verify_asn1(hash, asn1_encode(r, s))
 
+# p [r.to_s(16)].pack('H*')
+
 # also check the points from the example verify as expected
-r = make_bn([14, 209, 33, 83, 121, 99, 108, 72, 60, 47, 127, 21, 88, 7, 212, 2, 163, 178, 40, 3, 58, 249, 124, 126, 23, 129, 154, 195, 22, 158, 166, 101]  )
-s = make_bn([197, 10, 7, 211, 140, 60, 112, 229, 216, 241, 45, 175, 8, 74, 84, 128, 166, 101, 144, 197, 242, 147, 80, 154, 143, 63, 127, 138, 131, 163, 84, 213])
-p ec.dsa_verify_asn1(hash, asn1_encode(r, s))
+# r = make_bn([14, 209, 33, 83, 121, 99, 108, 72, 60, 47, 127, 21, 88, 7, 212, 2, 163, 178, 40, 3, 58, 249, 124, 126, 23, 129, 154, 195, 22, 158, 166, 101]  )
+# s = make_bn([197, 10, 7, 211, 140, 60, 112, 229, 216, 241, 45, 175, 8, 74, 84, 128, 166, 101, 144, 197, 242, 147, 80, 154, 143, 63, 127, 138, 131, 163, 84, 213])
+
+# p [r.to_s(16) + s.to_s(16)].pack('H*').unpack('C*')
+
+# p ec.dsa_verify_asn1(hash, asn1_encode(r, s))
 
 
 
