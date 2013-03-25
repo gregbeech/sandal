@@ -19,32 +19,43 @@ module Sandal
       def sign(payload)
         hash = @digest.digest(payload)
         asn1_sig = @key.dsa_sign_asn1(hash)
-        r, s = asn1_decode(asn1_sig)
-        Sandal::Util.base64_encode([r.to_s(16) + s.to_s(16)].pack('H*'))
+        r, s = self.class.decode_asn1_signature(asn1_sig)
+        self.class.encode_jws_signature(r, s)
       end
 
       # Verifies a payload signature and returns whether the signature matches.
       def verify(signature, payload)
-        packed_sig = Sandal::Util.base64_decode(signature)
-        r = OpenSSL::BN.new(packed_sig[0..31].unpack('H*')[0], 16)
-        s = OpenSSL::BN.new(packed_sig[32..64].unpack('H*')[0], 16)
-        asn1_sig = asn1_encode(r, s)
         hash = @digest.digest(payload)
+        r, s = self.class.decode_jws_signature(signature)
+        asn1_sig = self.class.encode_asn1_signature(r, s)
         @key.dsa_verify_asn1(hash, asn1_sig)
       end
 
-      private
-
       # Decodes an ASN1 signature into a pair of BNs.
-      def self.asn1_decode(signature)
-        asn1 = OpenSSL::ASN1.decode(signature)
-        return asn1.value[0].value, asn1.value[1].value
+      def self.decode_asn1_signature(signature)
+        asn_seq = OpenSSL::ASN1.decode(signature)
+        return asn_seq.value[0].value, asn_seq.value[1].value
       end
 
       # Encodes a pair of BNs into an ASN1 signature.
-      def self.asn1_encode(r, s)
+      def self.encode_asn1_signature(r, s)
         items = [OpenSSL::ASN1::Integer.new(r), OpenSSL::ASN1::Integer.new(s)]
         OpenSSL::ASN1::Sequence.new(items).to_der
+      end
+
+      # Decodes a JWS signature into a pair of BNs.
+      def self.decode_jws_signature(signature)
+        hex_string = Sandal::Util.base64_decode(signature)
+        coord_length = hex_string.length / 2
+        r = OpenSSL::BN.new(hex_string[0..(coord_length - 1)].unpack('H*')[0], 16)
+        s = OpenSSL::BN.new(hex_string[coord_length..-1].unpack('H*')[0], 16)
+        return r, s
+      end
+
+      # Encodes a pair of BNs into a JWS signature.
+      def self.encode_jws_signature(r, s)  
+        hex_string = [r.to_s(16) + s.to_s(16)].pack('H*')
+        Sandal::Util.base64_encode(hex_string)
       end
 
     end
