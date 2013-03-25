@@ -14,7 +14,7 @@ module Sandal
       def initialize(sha_size, key)
         throw ArgumentError.new('A key is required.') unless key
         @name = "RS#{sha_size}"
-        @digest = OpenSSL::Digest.new("SHA#{sha_size}")
+        @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @key = key
       end
 

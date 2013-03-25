@@ -45,6 +45,7 @@ describe Sandal::Sig::ES256 do
 end
 
 describe Sandal::Sig::ES384 do
+
   it 'can sign data and verify signatures' do
     group = OpenSSL::PKey::EC::Group.new('secp384r1') 
     private_key = OpenSSL::PKey::EC.new(group).generate_key
@@ -56,9 +57,11 @@ describe Sandal::Sig::ES384 do
     verifier = Sandal::Sig::ES384.new(public_key)
     verifier.verify(signature, data).should == true
   end
+
 end
 
 describe Sandal::Sig::ES512 do
+
   it 'can sign data and verify signatures' do
     group = OpenSSL::PKey::EC::Group.new('secp521r1') 
     private_key = OpenSSL::PKey::EC.new(group).generate_key
@@ -70,4 +73,5 @@ describe Sandal::Sig::ES512 do
     verifier = Sandal::Sig::ES512.new(public_key)
     verifier.verify(signature, data).should == true
   end
+
 end

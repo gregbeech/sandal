@@ -14,9 +14,9 @@ module Sandal
         @sha_size = aes_size * 2 # TODO: Any smarter way to do this?
         @name = "A#{aes_size}CBC+HS#{@sha_size}"
         @alg_name = "RSA1_5" # TODO: From key?
-        @cipher_name = "AES-#{aes_size}-CBC"
+        @cipher_name = "aes-#{aes_size}-cbc"
         @key = key
-        @digest = OpenSSL::Digest.new("SHA#{@sha_size}")
+        @digest = OpenSSL::Digest.new("sha#{@sha_size}")
       end
 
       def encrypt(header, payload)
