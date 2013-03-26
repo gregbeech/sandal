@@ -1,6 +1,9 @@
 require 'helper'
 require 'openssl'
 
+# EC isn't implemented in jruby-openssl at the moment
+if defined? OpenSSL::PKey::EC
+
 def make_bn(arr)
   hex_str = arr.pack('C*').unpack('H*')[0]
   OpenSSL::BN.new(hex_str, 16)
@@ -131,5 +134,7 @@ describe Sandal::Sig::ES512 do
     verifier = Sandal::Sig::ES512.new(public_key)
     verifier.verify(signature, data).should == false
   end
+
+end
 
 end
