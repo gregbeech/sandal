@@ -1,4 +1,4 @@
-** WARNING: This library is in a very early stage, has barely been tested, and probably doesn't work correctly. Feedback and pull requests are welcome, but don't use it for anything yet! **
+**WARNING: This library is in a very early stage, has barely been tested, and probably doesn't work correctly. Feedback and pull requests are welcome, but don't use it for anything yet!**
 
 Sandal
 ======
