@@ -11,6 +11,36 @@ require 'sandal/enc'
 # A library for creating and reading JSON Web Tokens (JWT).
 module Sandal
 
+  # The error that is raised when a token is invalid.
+  class TokenError < StandardError; end
+
+  # The default options for token handling.
+  #
+  # max_clock_skew:: The maximum clock skew, in seconds, when validating times.
+  # valid_iss:: A list of valid token issuers, if issuer validation is required.
+  # valid_aud:: A list of valid audiences, if audience validation is required.
+  # validate_exp:: Whether the expiry date of the token is validated.
+  # validate_nbf:: Whether the not-before date of the token is validated.
+  # validate_integrity:: Whether the integrity value of encrypted (JWE) tokens is validated.
+  # validate_signature:: Whether the signature of signed (JWS) tokens is validated.
+  DEFAULT_OPTIONS = {
+    max_clock_skew: 300,
+    valid_iss: [],
+    valid_aud: [],
+    validate_exp: true,
+    validate_nbf: true,
+    validate_integrity: true,
+    validate_signature: true
+  }
+
+  # Overrides the default options.
+  #
+  # @param defaults [Hash] The options to override (see {DEFAULT_OPTIONS} for details).
+  # @return [Hash] The new default options.
+  def self.default!(defaults)
+    DEFAULT_OPTIONS.merge!(defaults)
+  end
+
   # Creates a signed JSON Web Token.
   #
   # @param payload [String] The payload of the token.
@@ -53,27 +83,37 @@ module Sandal
 
   # Decodes a JSON Web Token, verifying the signature as necessary.
   #
-  # **NOTE: This method is likely to change, to allow more validation options**
-  def self.decode_token(token, &sig_finder)
+  # @param token [String] The encoded JSON Web Token.
+  # @yieldparam header [Hash] The JWT header values.
+  # @yieldparam options [Hash] (Optional) A hash that can be used to override the default options.
+  # @yieldreturn [Sandal::Sig] The signature verifier.
+  def self.decode_token(token, &block)
     parts = token.split('.')
-    throw ArgumentError.new('Invalid token format.') unless [2, 3].include?(parts.length)
+    throw TokenError.new('Invalid token format.') unless [2, 3].include?(parts.length)
     begin
       header = JSON.parse(Sandal::Util.base64_decode(parts[0]))
       payload = Sandal::Util.base64_decode(parts[1])
       signature = if parts.length > 2 then Sandal::Util.base64_decode(parts[2]) else '' end
     rescue
-      throw ArgumentError.new('Invalid token encoding.')
+      throw TokenError.new('Invalid token encoding.')
     end
 
-    algorithm = header['alg']
-    if algorithm && algorithm != 'none'
-      throw SecurityError.new('The signature is missing.') unless signature.length > 0
-      sig = sig_finder.call(header)
-      throw SecurityError.new('No signature verifier was found.') unless sig
+    options = DEFAULT_OPTIONS.clone
+    if block
+      case block.arity
+      when 1 then verifier = block.call(header)
+      when 2 then verifier = block.call(header, options)
+      else throw ArgumentError.new('Incorrect number of block parameters.')
+      end
+    end    
+    verifier ||= Sandal::Sig::None.instance
+
+    if options[:validate_signature]
       secured_input = parts.take(2).join('.')
-      throw ArgumentError.new('Invalid signature.') unless sig.verify(signature, secured_input)
+      throw TokenError.new('Invalid signature.') unless verifier.verify(signature, secured_input)
     end
 
+    validate_claims(header, options)
     payload
   end
 
@@ -98,38 +138,56 @@ module Sandal
     enc.decrypt(encrypted_key, iv, ciphertext, parts.take(4).join('.'), integrity_value)
   end
 
-end
+  private
 
-if __FILE__ == $0
+  # Validates token claims according to the options
+  def self.validate_claims(header, options)
+    validate_expires(header, options)
+    validate_not_before(header, options)
+    validate_issuer(header, options)
+    validate_audience(header, options)
+  end
 
-  # create payload
-  issued_at = Time.now
-  claims = JSON.generate({
-    iss: 'example.org',
-    aud: 'example.com',
-    sub: 'user@example.org',
-    iat: issued_at.to_i,
-    exp: (issued_at + 3600).to_i
-  })
+  # Validates the 'exp' claim.
+  def self.validate_expires(header, options)
+    if options[:validate_exp] && header['exp']
+      begin
+        exp = Time.at(header['exp'])
+      rescue
+        throw TokenError.new('The "exp" claim is invalid.')
+      end
+      throw TokenError.new('The token has expired.') unless exp < Time.now + options[:max_clock_skew]
+    end
+  end
 
-  puts claims.to_s
+  # Validates the 'nbf' claim
+  def self.validate_not_before(header, options)
+    if options[:validate_nbf] && header['nbf']
+      begin
+        nbf = Time.at(header['nbf'])
+      rescue
+        throw TokenError.new('The "nbf" claim is invalid.')
+      end
+      throw TokenError.new('The token is not valid yet.') unless nbf >= Time.now - options[:max_clock_skew]
+    end
+  end
 
-  # sign and encrypt
-  jws_key = OpenSSL::PKey::RSA.new(2048)
-  sig = Sandal::Sig::RS256.new(jws_key)
-  jws_token = Sandal.encode_token(claims.to_s, sig)
+  # Validates the 'iss' claim.
+  def self.validate_issuer(header, options)
+    valid_iss = options[:valid_iss]
+    if valid_iss && valid_iss.length > 0
+      throw TokenError.new('The issuer is invalid.') unless valid_iss.include?(header['iss'])
+    end
+  end
 
-  puts jws_token
-
-  jwe_key = OpenSSL::PKey::RSA.new(2048)
-  enc = Sandal::Enc::AES128GCM.new(jwe_key.public_key)
-  jwe_token = Sandal.encrypt_token(jws_token, enc, { 'cty' => 'JWT' })
-
-  puts jwe_token
-
-  jws_token_2 = Sandal.decrypt_token(jwe_token) { |header| Sandal::Enc::AES128CBC.new(jwe_key) }
-  roundtrip_claims = Sandal.decode_token(jws_token_2) { |header| Sandal::Sig::RS256.new(jws_key.public_key) }
-
-  puts roundtrip_claims
+  # Validates the 'aud' claim.
+  def self.validate_audience(header, options)
+    valid_aud = options[:valid_aud]
+    if valid_aud && valid_aud.length > 0
+      aud = header['aud']
+      aud = [aud] unless aud.kind_of?(Array)
+      throw TokenError.new('The audence is invalid.') unless (aud & valid_aud).length > 0
+    end
+  end
 
 end
