@@ -6,4 +6,5 @@ gem 'jruby-openssl', :platforms => :jruby
 group :test, :development do
   gem 'rake'
   gem 'rspec'
+  gem 'coveralls', require: false
 end

@@ -46,7 +46,7 @@ describe Sandal::Sig::ES256 do
     r = make_bn([14, 209, 33, 83, 121, 99, 108, 72, 60, 47, 127, 21, 88, 7, 212, 2, 163, 178, 40, 3, 58, 249, 124, 126, 23, 129, 154, 195, 22, 158, 166, 101]  )
     s = make_bn([197, 10, 7, 211, 140, 60, 112, 229, 216, 241, 45, 175, 8, 74, 84, 128, 166, 101, 144, 197, 242, 147, 80, 154, 143, 63, 127, 138, 131, 163, 84, 213])
     data = 'eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ'
-    signature = Sandal::Sig::ES.encode_jws_signature(r, s)
+    signature = Sandal::Sig::ES.encode_jws_signature(r, s, 256)
 
     group = OpenSSL::PKey::EC::Group.new('prime256v1') 
     public_key = OpenSSL::PKey::EC.new(group)
@@ -62,7 +62,7 @@ describe Sandal::Sig::ES256 do
     r = make_bn([14, 209, 33, 83, 121, 99, 108, 72, 60, 47, 127, 21, 88, 7, 212, 2, 163, 178, 40, 3, 58, 249, 124, 126, 23, 129, 154, 195, 22, 158, 166, 101]  )
     s = make_bn([197, 10, 7, 211, 140, 60, 112, 229, 216, 241, 45, 175, 8, 74, 84, 128, 166, 101, 144, 197, 242, 147, 80, 154, 143, 63, 127, 138, 131, 163, 84, 213])
     data = 'not the data that was signed'
-    signature = Sandal::Sig::ES.encode_jws_signature(r, s)
+    signature = Sandal::Sig::ES.encode_jws_signature(r, s, 256)
 
     group = OpenSSL::PKey::EC::Group.new('prime256v1') 
     public_key = OpenSSL::PKey::EC.new(group)
@@ -110,7 +110,7 @@ describe Sandal::Sig::ES512 do
     r = make_bn([1, 220, 12, 129, 231, 171, 194, 209, 232, 135, 233, 117, 247, 105, 122, 210, 26, 125, 192, 1, 217, 21, 82, 91, 45, 240, 255, 83, 19, 34, 239, 71, 48, 157, 147, 152, 105, 18, 53, 108, 163, 214, 68, 231, 62, 153, 150, 106, 194, 164, 246, 72, 143, 138, 24, 50, 129, 223, 133, 206, 209, 172, 63, 237, 119, 109]    )
     s = make_bn([0, 111, 6, 105, 44, 5, 41, 208, 128, 61, 152, 40, 92, 61, 152, 4, 150, 66, 60, 69, 247, 196, 170, 81, 193, 199, 78, 59, 194, 169, 16, 124, 9, 143, 42, 142, 131, 48, 206, 238, 34, 175, 83, 203, 220, 159, 3, 107, 155, 22, 27, 73, 111, 68, 68, 21, 238, 144, 229, 232, 148, 188, 222, 59, 242, 103] )
     data = 'eyJhbGciOiJFUzUxMiJ9.UGF5bG9hZA'
-    signature = Sandal::Sig::ES.encode_jws_signature(r, s)
+    signature = Sandal::Sig::ES.encode_jws_signature(r, s, 521)
 
     group = OpenSSL::PKey::EC::Group.new('secp521r1') 
     public_key = OpenSSL::PKey::EC.new(group)
@@ -126,7 +126,7 @@ describe Sandal::Sig::ES512 do
     r = make_bn([1, 220, 12, 129, 231, 171, 194, 209, 232, 135, 233, 117, 247, 105, 122, 210, 26, 125, 192, 1, 217, 21, 82, 91, 45, 240, 255, 83, 19, 34, 239, 71, 48, 157, 147, 152, 105, 18, 53, 108, 163, 214, 68, 231, 62, 153, 150, 106, 194, 164, 246, 72, 143, 138, 24, 50, 129, 223, 133, 206, 209, 172, 63, 237, 119, 109]    )
     s = make_bn([0, 111, 6, 105, 44, 5, 41, 208, 128, 61, 152, 40, 92, 61, 152, 4, 150, 66, 60, 69, 247, 196, 170, 81, 193, 199, 78, 59, 194, 169, 16, 124, 9, 143, 42, 142, 131, 48, 206, 238, 34, 175, 83, 203, 220, 159, 3, 107, 155, 22, 27, 73, 111, 68, 68, 21, 238, 144, 229, 232, 148, 188, 222, 59, 242, 103] )
     data = 'not the data that was signed'
-    signature = Sandal::Sig::ES.encode_jws_signature(r, s)
+    signature = Sandal::Sig::ES.encode_jws_signature(r, s, 521)
 
     group = OpenSSL::PKey::EC::Group.new('secp521r1') 
     public_key = OpenSSL::PKey::EC.new(group)
