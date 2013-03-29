@@ -11,8 +11,23 @@ describe Sandal::Util do
     val.should == src
   end
 
-  it 'compares strings using a time-insensitive method' do
-    # TODO: Probably need to look at the benchmark module for this
+  it 'compares nil strings as equal' do
+    Sandal::Util.secure_equals(nil, nil).should == true
+  end
+
+  it 'compares nil strings as unequal to empty strings' do
+    Sandal::Util.secure_equals(nil, '').should == false
+    Sandal::Util.secure_equals('', nil).should == false
+  end
+
+  it 'compares equal strings as equal' do
+    Sandal::Util.secure_equals('hello', 'hello').should == true
+    Sandal::Util.secure_equals('a longer string', 'a longer string').should == true
+  end
+
+  it 'compares unequal strings as unequal' do
+    Sandal::Util.secure_equals('hello', 'world').should == false
+    Sandal::Util.secure_equals('a longer string', 'a different longer string').should == false
   end
 
 end

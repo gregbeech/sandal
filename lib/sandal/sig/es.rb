@@ -46,11 +46,10 @@ module Sandal
 
       # Decodes a JWS signature into a pair of BNs.
       def self.decode_jws_signature(signature)
-        binary_string = Sandal::Util.base64_decode(signature)
-        n_length = binary_string.length / 2
+        n_length = signature.length / 2
         s_to_n = lambda { |s| OpenSSL::BN.new(s.unpack('H*')[0], 16) }
-        r = s_to_n.call(binary_string[0..(n_length - 1)])
-        s = s_to_n.call(binary_string[n_length..-1])
+        r = s_to_n.call(signature[0..(n_length - 1)])
+        s = s_to_n.call(signature[n_length..-1])
         return r, s
       end
 
@@ -58,9 +57,7 @@ module Sandal
       def self.encode_jws_signature(r, s, prime_size)
         byte_count = (prime_size / 8.0).ceil
         n_to_s = lambda { |n| [n.to_s(16)].pack('H*').rjust(byte_count, "\0") }
-        r_str = n_to_s.call(r)
-        s_str = n_to_s.call(s)
-        Sandal::Util.base64_encode(r_str + s_str)
+        n_to_s.call(r) + n_to_s.call(s)
       end
 
     end

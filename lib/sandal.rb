@@ -11,37 +11,49 @@ require 'sandal/enc'
 # A library for creating and reading JSON Web Tokens (JWT).
 module Sandal
 
-  # Creates a signed token.
-  def self.encode_token(payload, sig, header_fields = nil)
+  # Creates a signed JSON Web Token.
+  #
+  # @param payload [String] The payload of the token.
+  # @param signer [Sandal::Sig] The token signer, which may be nil for an unsigned token.
+  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg').
+  # @return [String] A signed JSON Web Token.
+  def self.encode_token(payload, signer, header_fields = nil)
     if header_fields && header_fields['enc']
       throw ArgumentError.new('The header cannot contain an "enc" parameter.')
     end
-    sig ||= Sandal::Sig::None.instance
+    signer ||= Sandal::Sig::None.instance
 
     header = {}
-    header['alg'] = sig.name if sig.name != Sandal::Sig::None.instance.name
+    header['alg'] = signer.name if signer.name != Sandal::Sig::None.instance.name
     header = header_fields.merge(header) if header_fields
 
     encoded_header = Sandal::Util.base64_encode(JSON.generate(header))
     encoded_payload = Sandal::Util.base64_encode(payload)
     secured_input = [encoded_header, encoded_payload].join('.')
 
-    signature = sig.sign(secured_input)
+    signature = signer.sign(secured_input)
     encoded_signature = Sandal::Util.base64_encode(signature)
     [secured_input, encoded_signature].join('.')
   end
 
-  # Creates an encrypted token.
-  def self.encrypt_token(payload, enc, header_fields = nil)
+  # Creates an encrypted JSON Web Token.
+  #
+  # @param payload [String] The payload of the token.
+  # @param encrypted [Sandal::Enc] The token encrypter.
+  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg' or 'enc').
+  # @return [String] An encrypted JSON Web Token.
+  def self.encrypt_token(payload, encrypter, header_fields = nil)
     header = {}
-    header['enc'] = enc.name
-    header['alg'] = enc.alg_name
+    header['enc'] = encrypter.name
+    header['alg'] = encrypter.alg_name
     header = header_fields.merge(header) if header_fields
 
-    enc.encrypt(header, payload)
+    encrypter.encrypt(header, payload)
   end
 
-  # Decodes a token, verifying the signature if present.
+  # Decodes a JSON Web Token, verifying the signature as necessary.
+  #
+  # **NOTE: This method is likely to change, to allow more validation options**
   def self.decode_token(token, &sig_finder)
     parts = token.split('.')
     throw ArgumentError.new('Invalid token format.') unless [2, 3].include?(parts.length)
@@ -65,7 +77,9 @@ module Sandal
     payload
   end
 
-  # Decrypts a token.
+  # Decrypts an encrypted JSON Web Token.
+  #
+  # **NOTE: This method is likely to change, to allow more validation options**
   def self.decrypt_token(encrypted_token, &enc_finder)
     parts = encrypted_token.split('.')
     throw ArgumentError.new('Invalid token format.') unless parts.length == 5
