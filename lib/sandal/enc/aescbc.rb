@@ -9,7 +9,7 @@ module Sandal
       include Sandal::Enc
 
       def initialize(aes_size, key)
-        throw ArgumentError.new('A key is required.') unless key
+        raise ArgumentError, 'A key is required.' unless key
         @aes_size = aes_size
         @sha_size = aes_size * 2 # TODO: Any smarter way to do this?
         @name = "A#{aes_size}CBC+HS#{@sha_size}"
@@ -49,7 +49,7 @@ module Sandal
 
         content_integrity_key = derive_content_key('Integrity', content_master_key, @sha_size)
         computed_integrity_value = OpenSSL::HMAC.digest(@digest, content_integrity_key, secured_input)
-        throw ArgumentError.new('Invalid signature.') unless integrity_value == computed_integrity_value
+        raise ArgumentError, 'Invalid signature.' unless integrity_value == computed_integrity_value
 
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
         cipher.key = derive_content_key('Encryption', content_master_key, @aes_size)

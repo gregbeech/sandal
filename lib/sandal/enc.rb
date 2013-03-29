@@ -10,12 +10,12 @@ module Sandal
 
     # Encrypts a header and payload, and returns an encrypted token.
     def encrypt(header, payload)
-      throw NotImplementedError.new("#{@name}.encrypt is not implemented.")
+      raise NotImplementedError, "#{@name}.encrypt is not implemented."
     end
 
     # Decrypts a token.
     def decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
-      throw NotImplementedError.new("#{@name}.decrypt is not implemented.")
+      raise NotImplementedError, "#{@name}.decrypt is not implemented."
     end
 
   end

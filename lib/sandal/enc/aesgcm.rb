@@ -9,15 +9,15 @@ module Sandal
       include Sandal::Enc
 
       def initialize(aes_size, key)
-        throw NotImplementedException.new('AES-CGM is not yet implemented.')
+        raise NotImplementedException, 'AES-CGM is not yet implemented.'
       end
 
       def encrypt(header, payload)
-        throw NotImplementedException.new('AES-CGM is not yet implemented.')
+        raise NotImplementedException, 'AES-CGM is not yet implemented.'
       end
 
       def decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
-        throw NotImplementedException.new('AES-CGM is not yet implemented.')
+        raise NotImplementedException, 'AES-CGM is not yet implemented.'
       end
 
     end

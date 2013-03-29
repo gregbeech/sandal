@@ -12,7 +12,7 @@ module Sandal
       # Note that the size of the RSA key must be at least 2048 bits to be compliant with the
       # JWA specification.
       def initialize(sha_size, key)
-        throw ArgumentError.new('A key is required.') unless key
+        raise ArgumentError, 'A key is required.' unless key
         @name = "RS#{sha_size}"
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @key = key
@@ -20,7 +20,7 @@ module Sandal
 
       # Signs a payload and returns the signature.
       def sign(payload)
-        throw ArgumentError.new('A private key is required to sign the payload.') unless @key.private?
+        raise ArgumentError, 'A private key is required to sign the payload.' unless @key.private?
         @key.sign(@digest, payload)
       end
 

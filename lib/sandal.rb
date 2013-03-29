@@ -49,7 +49,7 @@ module Sandal
   # @return [String] A signed JSON Web Token.
   def self.encode_token(payload, signer, header_fields = nil)
     if header_fields && header_fields['enc']
-      throw ArgumentError.new('The header cannot contain an "enc" parameter.')
+      raise ArgumentError, 'The header cannot contain an "enc" parameter.'
     end
     signer ||= Sandal::Sig::None.instance
 
@@ -84,18 +84,19 @@ module Sandal
   # Decodes a JSON Web Token, verifying the signature as necessary.
   #
   # @param token [String] The encoded JSON Web Token.
+  # @return [Hash/String] The payload of the token as a Hash if it was JSON, otherwise as a String.
   # @yieldparam header [Hash] The JWT header values.
   # @yieldparam options [Hash] (Optional) A hash that can be used to override the default options.
   # @yieldreturn [Sandal::Sig] The signature verifier.
   def self.decode_token(token, &block)
     parts = token.split('.')
-    throw TokenError.new('Invalid token format.') unless [2, 3].include?(parts.length)
+    raise TokenError, 'Invalid token format.' unless [2, 3].include?(parts.length)
     begin
       header = JSON.parse(Sandal::Util.base64_decode(parts[0]))
       payload = Sandal::Util.base64_decode(parts[1])
       signature = if parts.length > 2 then Sandal::Util.base64_decode(parts[2]) else '' end
     rescue
-      throw TokenError.new('Invalid token encoding.')
+      raise TokenError, 'Invalid token encoding.'
     end
 
     options = DEFAULT_OPTIONS.clone
@@ -103,18 +104,20 @@ module Sandal
       case block.arity
       when 1 then verifier = block.call(header)
       when 2 then verifier = block.call(header, options)
-      else throw ArgumentError.new('Incorrect number of block parameters.')
+      else raise ArgumentError, 'Incorrect number of block parameters.'
       end
     end    
     verifier ||= Sandal::Sig::None.instance
 
     if options[:validate_signature]
       secured_input = parts.take(2).join('.')
-      throw TokenError.new('Invalid signature.') unless verifier.verify(signature, secured_input)
+      raise TokenError, 'Invalid signature.' unless verifier.verify(signature, secured_input)
     end
 
-    validate_claims(header, options)
-    payload
+    claims = JSON.parse(payload) rescue nil
+    validate_claims(claims, options) if claims
+
+    claims || payload
   end
 
   # Decrypts an encrypted JSON Web Token.
@@ -122,7 +125,7 @@ module Sandal
   # **NOTE: This method is likely to change, to allow more validation options**
   def self.decrypt_token(encrypted_token, &enc_finder)
     parts = encrypted_token.split('.')
-    throw ArgumentError.new('Invalid token format.') unless parts.length == 5
+    raise ArgumentError, 'Invalid token format.' unless parts.length == 5
     begin
       header = JSON.parse(Sandal::Util.base64_decode(parts[0]))
       encrypted_key = Sandal::Util.base64_decode(parts[1])
@@ -130,63 +133,63 @@ module Sandal
       ciphertext = Sandal::Util.base64_decode(parts[3])
       integrity_value = Sandal::Util.base64_decode(parts[4])
     rescue
-      throw ArgumentError.new('Invalid token encoding.')
+      raise ArgumentError, 'Invalid token encoding.'
     end
 
     enc = enc_finder.call(header)
-    throw SecurityError.new('No decryptor was found.') unless enc
+    raise TokenError, 'No decryptor was found.' unless enc
     enc.decrypt(encrypted_key, iv, ciphertext, parts.take(4).join('.'), integrity_value)
   end
 
   private
 
   # Validates token claims according to the options
-  def self.validate_claims(header, options)
-    validate_expires(header, options)
-    validate_not_before(header, options)
-    validate_issuer(header, options)
-    validate_audience(header, options)
+  def self.validate_claims(claims, options)
+    validate_expires(claims, options)
+    validate_not_before(claims, options)
+    validate_issuer(claims, options)
+    validate_audience(claims, options)
   end
 
   # Validates the 'exp' claim.
-  def self.validate_expires(header, options)
-    if options[:validate_exp] && header['exp']
+  def self.validate_expires(claims, options)
+    if options[:validate_exp] && claims['exp']
       begin
-        exp = Time.at(header['exp'])
+        exp = Time.at(claims['exp'])
       rescue
-        throw TokenError.new('The "exp" claim is invalid.')
+        raise TokenError, 'The "exp" claim is invalid.'
       end
-      throw TokenError.new('The token has expired.') unless exp < Time.now + options[:max_clock_skew]
+      raise TokenError, 'The token has expired.' unless exp > (Time.now - options[:max_clock_skew])
     end
   end
 
   # Validates the 'nbf' claim
-  def self.validate_not_before(header, options)
-    if options[:validate_nbf] && header['nbf']
+  def self.validate_not_before(claims, options)
+    if options[:validate_nbf] && claims['nbf']
       begin
-        nbf = Time.at(header['nbf'])
+        nbf = Time.at(claims['nbf'])
       rescue
-        throw TokenError.new('The "nbf" claim is invalid.')
+        raise TokenError, 'The "nbf" claim is invalid.'
       end
-      throw TokenError.new('The token is not valid yet.') unless nbf >= Time.now - options[:max_clock_skew]
+      raise TokenError, 'The token is not valid yet.' unless nbf < (Time.now + options[:max_clock_skew])
     end
   end
 
   # Validates the 'iss' claim.
-  def self.validate_issuer(header, options)
+  def self.validate_issuer(claims, options)
     valid_iss = options[:valid_iss]
     if valid_iss && valid_iss.length > 0
-      throw TokenError.new('The issuer is invalid.') unless valid_iss.include?(header['iss'])
+      raise TokenError, 'The issuer is invalid.' unless valid_iss.include?(claims['iss'])
     end
   end
 
   # Validates the 'aud' claim.
-  def self.validate_audience(header, options)
+  def self.validate_audience(claims, options)
     valid_aud = options[:valid_aud]
     if valid_aud && valid_aud.length > 0
-      aud = header['aud']
+      aud = claims['aud']
       aud = [aud] unless aud.kind_of?(Array)
-      throw TokenError.new('The audence is invalid.') unless (aud & valid_aud).length > 0
+      raise TokenError, 'The audence is invalid.' unless (aud & valid_aud).length > 0
     end
   end
 

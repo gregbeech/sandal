@@ -9,7 +9,7 @@ module Sandal
 
       # Creates a new instance with the size of the SHA algorithm and an OpenSSL ES PKey.
       def initialize(sha_size, prime_size, key)
-        throw ArgumentError.new('A key is required.') unless key
+        raise ArgumentError, 'A key is required.' unless key
         @name = "ES#{sha_size}"
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @prime_size = prime_size
