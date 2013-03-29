@@ -83,14 +83,21 @@ module Sandal
     encrypter.encrypt(header, payload)
   end
 
-  # Decodes a JSON Web Token, verifying the signature as necessary.
+  # Decodes and validates a JSON Web Token.
+  #
+  # The block is called with the token header as the first parameter, and should return the appropriate
+  # {Sandal::Sig} to verify the signature. It can optionally have a second options parameter which can
+  # be used to override the {DEFAULT_OPTIONS} on a per-token basis.
   #
   # @param token [String] The encoded JSON Web Token.
-  # @return [Hash/String] The payload of the token as a Hash if it was JSON, otherwise as a String.
   # @yieldparam header [Hash] The JWT header values.
   # @yieldparam options [Hash] (Optional) A hash that can be used to override the default options.
   # @yieldreturn [Sandal::Sig] The signature verifier.
+  # @return [Hash/String] The payload of the token as a Hash if it was JSON, otherwise as a String.
+  # @raise [ArgumentError] The token parameter is nil or empty, or the block has the wrong arity.
+  # @raise [TokenError] The token format is invalid, or validation of the token failed.
   def self.decode_token(token, &block)
+    raise ArgumentError, 'A token is required.' unless token && token.length > 0
     parts = token.split('.')
     raise TokenError, 'Invalid token format.' unless [2, 3].include?(parts.length)
     begin

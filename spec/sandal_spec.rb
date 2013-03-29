@@ -67,6 +67,54 @@ describe Sandal do
     Sandal.decode_token(token)
   end
 
+  it 'raises a token error when the issuer is not valid' do
+    token = Sandal.encode_token({ 'iss' => 'example.org' }, nil)
+    expect { Sandal.decode_token(token) do |header, options| 
+      options[:valid_iss] = ['example.net'] 
+      nil
+    end }.to raise_error Sandal::TokenError
+  end
+
+  it 'does not raise an error when the issuer is valid' do
+    token = Sandal.encode_token({ 'iss' => 'example.org' }, nil)
+    Sandal.decode_token(token) do |header, options| 
+      options[:valid_iss] = ['example.org', 'example.com']
+      nil
+    end
+  end
+
+  it 'raises a token error when the audience string is not valid' do
+    token = Sandal.encode_token({ 'aud' => 'example.com' }, nil)
+    expect { Sandal.decode_token(token) do |header, options| 
+      options[:valid_aud] = ['example.net'] 
+      nil
+    end }.to raise_error Sandal::TokenError
+  end
+
+  it 'raises a token error when the audience array is not valid' do
+    token = Sandal.encode_token({ 'aud' => ['example.org', 'example.com'] }, nil)
+    expect { Sandal.decode_token(token) do |header, options| 
+      options[:valid_aud] = ['example.net'] 
+      nil
+    end }.to raise_error Sandal::TokenError
+  end
+
+  it 'does not raise an error when the audience string is valid' do
+    token = Sandal.encode_token({ 'aud' => 'example.net' }, nil)
+    Sandal.decode_token(token) do |header, options| 
+      options[:valid_aud] = ['example.net'] 
+      nil
+    end
+  end
+
+  it 'does not raise an error when the audience array is valid' do
+    token = Sandal.encode_token({ 'aud' => ['example.com', 'example.net'] }, nil)
+    Sandal.decode_token(token) do |header, options| 
+      options[:valid_aud] = ['example.net'] 
+      nil
+    end
+  end
+
   it 'encodes and decodes tokens with RS256 signatures' do
     payload = 'Hello RSA256'
     private_key = OpenSSL::PKey::RSA.generate(2048)
