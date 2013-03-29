@@ -39,7 +39,7 @@ module Sandal
   # Creates an encrypted JSON Web Token.
   #
   # @param payload [String] The payload of the token.
-  # @param encrypted [Sandal::Enc] The token encrypter.
+  # @param encrypter [Sandal::Enc] The token encrypter.
   # @param header_fields [Hash] Header fields for the token (note: do not include 'alg' or 'enc').
   # @return [String] An encrypted JSON Web Token.
   def self.encrypt_token(payload, encrypter, header_fields = nil)

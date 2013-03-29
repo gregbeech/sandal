@@ -7,6 +7,9 @@ group :test, :development do
   gem 'rake'
   gem 'rspec'
   gem 'coveralls', require: false
+end
+
+group :development do
   gem 'yard', require: false
-  gem 'redcarpet', require: false # for yard
+  gem 'kramdown', require: false # for yard
 end
