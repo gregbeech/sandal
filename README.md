@@ -16,35 +16,42 @@ The signing part of the library is a lot smaller and easier to implement than th
 Signing example:
 
 ```ruby
-require 'json'
 require 'openssl'
 require 'sandal'
 
-claims = JSON.generate({ 
+claims = { 
   'iss' => 'example.org',
   'sub' => 'user@example.org',
   'exp' => (Time.now + 3600).to_i
-})
+}
 key = OpenSSL::PKey::EC.new(File.read('/path/to/private/key.pem'))
 signer = Sandal::Sig::ES256.new(key)
 token = Sandal.encode_token(claims, signer, { 
-  'kid' => 'a key identifier' 
+  'kid' => 'my key identifier' 
 })
 ```
 
-Verifying example:
+Decoding and validating example:
 
 ```ruby
 require 'openssl'
 require 'sandal'
 
 claims = Sandal.decode_token(token) do |header|
-  if header['kid'] == 'a key identifier'
+  if header['kid'] == 'my key identifier'
     key = OpenSSL::PKey::EC.new(File.read('/path/to/public/key.pem'))
     Sandal::Sig::ES256.new(key)
   end
 end
 ```
+
+You can also change the global default validation options, for example if you only want to accept tokens from 'example.org' with a maximum clock skew of one minute:
+
+```ruby
+Sandal.default! valid_iss: ['example.org'], max_clock_skew: 60
+```
+
+These options can also be configured on a per-token basis by using the second `options` parameter in the block.
 
 ## Encrypted Tokens
 

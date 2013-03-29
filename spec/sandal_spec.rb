@@ -23,47 +23,47 @@ describe Sandal do
   end
 
   it 'decodes JSON payloads to a Hash' do
-    token = Sandal.encode_token(JSON.generate({ 'valid' => 'json' }), nil)
+    token = Sandal.encode_token({ 'valid' => 'json' }, nil)
     Sandal.decode_token(token).class.should == Hash
   end
 
   it 'raises a token error when the expiry date is far in the past' do
-    token = Sandal.encode_token(JSON.generate({ 'exp' => (Time.now - 600).to_i }), nil)
+    token = Sandal.encode_token({ 'exp' => (Time.now - 600).to_i }, nil)
     expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
   end
 
   it 'does not raise an error when the expiry date is far in the past but validation is disabled' do
-    token = Sandal.encode_token(JSON.generate({ 'exp' => (Time.now - 600).to_i }), nil)
+    token = Sandal.encode_token({ 'exp' => (Time.now - 600).to_i }, nil)
     Sandal.decode_token(token) { |header, options| options[:validate_exp] = false }
   end
 
   it 'does not raise an error when the expiry date is in the past but within the clock skew' do
-    token = Sandal.encode_token(JSON.generate({ 'exp' => (Time.now - 60).to_i }), nil)
+    token = Sandal.encode_token({ 'exp' => (Time.now - 60).to_i }, nil)
     Sandal.decode_token(token)
   end
 
   it 'does not raise an error when the expiry date is valid' do
-    token = Sandal.encode_token(JSON.generate({ 'exp' => (Time.now + 60).to_i }), nil)
+    token = Sandal.encode_token({ 'exp' => (Time.now + 60).to_i }, nil)
     Sandal.decode_token(token)
   end
 
   it 'raises a token error when the not-before date is far in the future' do
-    token = Sandal.encode_token(JSON.generate({ 'nbf' => (Time.now + 600).to_i }), nil)
+    token = Sandal.encode_token({ 'nbf' => (Time.now + 600).to_i }, nil)
     expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
   end
 
   it 'does not raise an error when the not-before date is far in the future but validation is disabled' do
-    token = Sandal.encode_token(JSON.generate({ 'nbf' => (Time.now + 600).to_i }), nil)
+    token = Sandal.encode_token({ 'nbf' => (Time.now + 600).to_i }, nil)
     Sandal.decode_token(token) { |header, options| options[:validate_nbf] = false }
   end
 
   it 'does not raise an error when the not-before date is in the future but within the clock skew' do
-    token = Sandal.encode_token(JSON.generate({ 'nbf' => (Time.now + 60).to_i }), nil)
+    token = Sandal.encode_token({ 'nbf' => (Time.now + 60).to_i }, nil)
     Sandal.decode_token(token)
   end
 
   it 'does not raise an error when the not-before is valid' do
-    token = Sandal.encode_token(JSON.generate({ 'nbf' => (Time.now - 60).to_i }), nil)
+    token = Sandal.encode_token({ 'nbf' => (Time.now - 60).to_i }, nil)
     Sandal.decode_token(token)
   end
 

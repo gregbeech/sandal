@@ -43,7 +43,7 @@ module Sandal
 
   # Creates a signed JSON Web Token.
   #
-  # @param payload [String] The payload of the token.
+  # @param payload [String/Hash] The payload of the token. If a Hash then it will be encoded as JSON.
   # @param signer [Sandal::Sig] The token signer, which may be nil for an unsigned token.
   # @param header_fields [Hash] Header fields for the token (note: do not include 'alg').
   # @return [String] A signed JSON Web Token.
@@ -56,6 +56,8 @@ module Sandal
     header = {}
     header['alg'] = signer.name if signer.name != Sandal::Sig::None.instance.name
     header = header_fields.merge(header) if header_fields
+
+    payload = JSON.generate(payload) if payload.kind_of?(Hash)
 
     encoded_header = Sandal::Util.base64_encode(JSON.generate(header))
     encoded_payload = Sandal::Util.base64_encode(payload)
