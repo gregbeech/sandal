@@ -1,6 +1,54 @@
-**WARNING: This library is in a very early stage, has barely been tested, and probably doesn't work correctly. Feedback and pull requests are welcome, but don't use it for anything yet!**
+**NOTE: This library is pretty new and still has a lot of things that aren't finished or could be improved. Expect bugs and interface changes. Pull requests or feedback very much appreciated.**
 
 # Sandal [![Build Status](https://travis-ci.org/gregbeech/sandal.png?branch=master)](https://travis-ci.org/gregbeech/sandal) [![Coverage Status](https://coveralls.io/repos/gregbeech/sandal/badge.png?branch=master)](https://coveralls.io/r/gregbeech/sandal)
 
-A Ruby library for creating and reading JSON Web Tokens (JWT), supporting JSON Web Signatures (JWS) and JSON Web Encryption (JWE).
+A Ruby library for creating and reading [JSON Web Tokens (JWT) draft-06](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-06), supporting [JSON Web Signatures (JWS) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-signature-08) and [JSON Web Encryption (JWE) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08).
+
+## Signed Tokens
+
+The signing part of the library is a lot smaller and easier to implement than the encryption part, so I focused on that first. All the JWA signature methods are supported:
+
+- ES256, ES384, ES512 (note: not supported on jruby)
+- HS256, HS384, HS512
+- RS256, RS384, RS512
+- none
+
+Signing example:
+
+```ruby
+require 'json'
+require 'openssl'
+require 'sandal'
+
+claims = JSON.generate({ 
+  'iss' => 'example.org',
+  'sub' => 'user@example.org',
+  'exp' => (Time.now + 3600).to_i
+})
+key = OpenSSL::PKey::EC.new(File.read('/path/to/private/key.pem'))
+signer = Sandal::Sig::ES256.new(key)
+token = Sandal.encode_token(claims, signer, { 
+  'kid' => 'a key identifier' 
+})
+```
+
+Verifying example:
+
+```ruby
+require 'openssl'
+require 'sandal'
+
+claims = Sandal.decode_token(token) do |header|
+  if header['kid'] == 'a key identifier'
+    key = OpenSSL::PKey::EC.new(File.read('/path/to/public/key.pem'))
+    Sandal::Sig::ES256.new(key)
+  end
+end
+```
+
+## Encrypted Tokens
+
+This part of the library still needs a lot of work. The current version supports the AES/CBC algorithms and RSA1_5 key protection, but expect a lot of changes here. I'd avoid it for now.
+
+
 
