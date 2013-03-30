@@ -1,7 +1,7 @@
 $:.unshift('.')
 
 require 'base64'
-require 'json'
+require 'multi_json'
 require 'openssl'
 
 require 'sandal/version'
@@ -57,9 +57,9 @@ module Sandal
     header['alg'] = signer.name if signer.name != Sandal::Sig::None.instance.name
     header = header_fields.merge(header) if header_fields
 
-    payload = JSON.generate(payload) if payload.kind_of?(Hash)
+    payload = MultiJson.dump(payload) if payload.kind_of?(Hash)
 
-    encoded_header = Sandal::Util.base64_encode(JSON.generate(header))
+    encoded_header = Sandal::Util.base64_encode(MultiJson.dump(header))
     encoded_payload = Sandal::Util.base64_encode(payload)
     secured_input = [encoded_header, encoded_payload].join('.')
 
@@ -101,7 +101,7 @@ module Sandal
     parts = token.split('.')
     raise TokenError, 'Invalid token format.' unless [2, 3].include?(parts.length)
     begin
-      header = JSON.parse(Sandal::Util.base64_decode(parts[0]))
+      header = MultiJson.load(Sandal::Util.base64_decode(parts[0]))
       payload = Sandal::Util.base64_decode(parts[1])
       signature = if parts.length > 2 then Sandal::Util.base64_decode(parts[2]) else '' end
     rescue
@@ -123,7 +123,7 @@ module Sandal
       raise TokenError, 'Invalid signature.' unless verifier.verify(signature, secured_input)
     end
 
-    claims = JSON.parse(payload) rescue nil
+    claims = MultiJson.load(payload) rescue nil
     validate_claims(claims, options) if claims
 
     claims || payload
@@ -136,7 +136,7 @@ module Sandal
     parts = encrypted_token.split('.')
     raise ArgumentError, 'Invalid token format.' unless parts.length == 5
     begin
-      header = JSON.parse(Sandal::Util.base64_decode(parts[0]))
+      header = MultiJson.load(Sandal::Util.base64_decode(parts[0]))
       encrypted_key = Sandal::Util.base64_decode(parts[1])
       iv = Sandal::Util.base64_decode(parts[2])
       ciphertext = Sandal::Util.base64_decode(parts[3])

@@ -35,7 +35,7 @@ module Sandal
         ciphertext = cipher.update(payload) + cipher.final
         encoded_ciphertext = Sandal::Util.base64_encode(ciphertext)
 
-        encoded_header = Sandal::Util.base64_encode(JSON.generate(header))
+        encoded_header = Sandal::Util.base64_encode(MultiJson.dump(header))
         secured_input = [encoded_header, encoded_encrypted_key, encoded_iv, encoded_ciphertext].join('.')
         content_integrity_key = derive_content_key('Integrity', content_master_key, @sha_size)
         integrity_value = OpenSSL::HMAC.digest(@digest, content_integrity_key, secured_input)
