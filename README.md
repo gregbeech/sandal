@@ -2,7 +2,7 @@
 
 # Sandal [![Build Status](https://travis-ci.org/gregbeech/sandal.png?branch=master)](https://travis-ci.org/gregbeech/sandal) [![Coverage Status](https://coveralls.io/repos/gregbeech/sandal/badge.png?branch=master)](https://coveralls.io/r/gregbeech/sandal)
 
-A Ruby library for creating and reading [JSON Web Tokens (JWT) draft-06](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-06), supporting [JSON Web Signatures (JWS) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-signature-08) and [JSON Web Encryption (JWE) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08).
+A Ruby library for creating and reading [JSON Web Tokens (JWT) draft-06](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-06), supporting [JSON Web Signatures (JWS) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-signature-08) and [JSON Web Encryption (JWE) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08). See the [CHANGELOG](CHANGELOG.md) for version history.
 
 ## Installation
 
@@ -76,7 +76,7 @@ You can change the default validation options, for example if you only want to a
 Sandal.default! valid_iss: ['example.org'], max_clock_skew: 60
 ```
 
-Sometimes while developing it can be useful to turn off some validation options just to get things working (_don't do this in production!_):
+Sometimes while developing it can be useful to turn off some validation options just to get things working (don't do this in production!):
 
 ```ruby
 Sandal.default! validate_signature: false, validate_exp: false
