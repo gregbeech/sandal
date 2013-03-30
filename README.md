@@ -76,7 +76,7 @@ You can change the default validation options, for example if you only want to a
 Sandal.default! valid_iss: ['example.org'], max_clock_skew: 60
 ```
 
-Sometimes while developing it can be useful to turn off some validation options just to get things working (*don't do this in production!*):
+Sometimes while developing it can be useful to turn off some validation options just to get things working (_don't do this in production!_):
 
 ```ruby
 Sandal.default! validate_signature: false, validate_exp: false
