@@ -3,6 +3,14 @@ require 'openssl'
 
 describe Sandal do
 
+  it 'raises a token error when the token format is invalid' do
+    expect { Sandal.decode_token('not a valid token') }.to raise_error Sandal::TokenError
+  end  
+
+  it 'raises a token error when the token encoding is invalid' do
+    expect { Sandal.decode_token('an.invalid.token') }.to raise_error Sandal::TokenError
+  end
+
   it 'encodes and decodes tokens with no signature' do
     payload = 'Hello, World'
     token = Sandal.encode_token(payload, nil)
@@ -32,6 +40,11 @@ describe Sandal do
     expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
   end
 
+  it 'raises a token error when the expiry date is invalid' do
+    token = Sandal.encode_token({ 'exp' => 'invalid value' }, nil)
+    expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
+  end
+
   it 'does not raise an error when the expiry date is far in the past but validation is disabled' do
     token = Sandal.encode_token({ 'exp' => (Time.now - 600).to_i }, nil)
     Sandal.decode_token(token) { |header, options| options[:validate_exp] = false }
@@ -49,6 +62,11 @@ describe Sandal do
 
   it 'raises a token error when the not-before date is far in the future' do
     token = Sandal.encode_token({ 'nbf' => (Time.now + 600).to_i }, nil)
+    expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
+  end
+
+  it 'raises a token error when the not-before date is invalid' do
+    token = Sandal.encode_token({ 'nbf' => 'invalid value' }, nil)
     expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
   end
 
