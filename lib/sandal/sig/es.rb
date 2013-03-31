@@ -24,12 +24,12 @@ module Sandal
         self.class.encode_jws_signature(r, s, @prime_size)
       end
 
-      # Verifies a payload signature and returns whether the signature matches.
-      def verify(signature, payload)
+      # Validates a payload signature and returns whether the signature matches.
+      def valid?(signature, payload)
         hash = @digest.digest(payload)
         r, s = self.class.decode_jws_signature(signature)
         asn1_sig = self.class.encode_asn1_signature(r, s)
-        result = @key.dsa_verify_asn1(hash, asn1_sig)
+        @key.dsa_verify_asn1(hash, asn1_sig)
       end
 
       # Decodes an ASN1 signature into a pair of BNs.

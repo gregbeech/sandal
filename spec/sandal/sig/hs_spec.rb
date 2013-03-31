@@ -7,7 +7,7 @@ describe Sandal::Sig::HS256 do
     key = 'A secret key'
     signer = Sandal::Sig::HS256.new(key)
     signature = signer.sign(data)
-    signer.verify(signature, data).should == true
+    signer.valid?(signature, data).should == true
   end
 end
 
@@ -17,7 +17,7 @@ describe Sandal::Sig::HS384 do
     key = 'Another secret key'
     signer = Sandal::Sig::HS384.new(key)
     signature = signer.sign(data)
-    signer.verify(signature, data).should == true
+    signer.valid?(signature, data).should == true
   end
 end
 
@@ -27,6 +27,6 @@ describe Sandal::Sig::HS512 do
     key = 'Yet another secret key'
     signer = Sandal::Sig::HS512.new(key)
     signature = signer.sign(data)
-    signer.verify(signature, data).should == true
+    signer.valid?(signature, data).should == true
   end
 end

@@ -55,8 +55,8 @@ describe Sandal::Sig::ES256 do
     signature = signer.sign(data)
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = private_key.public_key
-    verifier = Sandal::Sig::ES256.new(public_key)
-    verifier.verify(signature, data).should == true
+    validator = Sandal::Sig::ES256.new(public_key)
+    validator.valid?(signature, data).should == true
   end
 
   it 'can verify the signature in JWS section A3.1' do
@@ -69,8 +69,8 @@ describe Sandal::Sig::ES256 do
     group = OpenSSL::PKey::EC::Group.new('prime256v1') 
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = make_point(group, x, y)
-    verifier = Sandal::Sig::ES256.new(public_key)
-    verifier.verify(signature, data).should == true
+    validator = Sandal::Sig::ES256.new(public_key)
+    validator.valid?(signature, data).should == true
   end
 
   it 'fails to verify the signature in JWS section A3.1 when the data is changed' do
@@ -83,8 +83,8 @@ describe Sandal::Sig::ES256 do
     group = OpenSSL::PKey::EC::Group.new('prime256v1') 
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = make_point(group, x, y)
-    verifier = Sandal::Sig::ES256.new(public_key)
-    verifier.verify(signature, data).should == false
+    validator = Sandal::Sig::ES256.new(public_key)
+    validator.valid?(signature, data).should == false
   end
 
 end
@@ -99,8 +99,8 @@ describe Sandal::Sig::ES384 do
     signature = signer.sign(data)
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = private_key.public_key
-    verifier = Sandal::Sig::ES384.new(public_key)
-    verifier.verify(signature, data).should == true
+    validator = Sandal::Sig::ES384.new(public_key)
+    validator.valid?(signature, data).should == true
   end
 
 end
@@ -115,8 +115,8 @@ describe Sandal::Sig::ES512 do
     signature = signer.sign(data)
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = private_key.public_key
-    verifier = Sandal::Sig::ES512.new(public_key)
-    verifier.verify(signature, data).should == true
+    validator = Sandal::Sig::ES512.new(public_key)
+    validator.valid?(signature, data).should == true
   end
 
   it 'can verify the signature in JWS section A4.1' do
@@ -129,8 +129,8 @@ describe Sandal::Sig::ES512 do
     group = OpenSSL::PKey::EC::Group.new('secp521r1') 
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = make_point(group, x, y)
-    verifier = Sandal::Sig::ES512.new(public_key)
-    verifier.verify(signature, data).should == true
+    validator = Sandal::Sig::ES512.new(public_key)
+    validator.valid?(signature, data).should == true
   end
 
   it 'fails to verify the signature in JWS section A4.1 when the data is changed' do
@@ -143,8 +143,8 @@ describe Sandal::Sig::ES512 do
     group = OpenSSL::PKey::EC::Group.new('secp521r1') 
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = make_point(group, x, y)
-    verifier = Sandal::Sig::ES512.new(public_key)
-    verifier.verify(signature, data).should == false
+    validator = Sandal::Sig::ES512.new(public_key)
+    validator.valid?(signature, data).should == false
   end
 
 end

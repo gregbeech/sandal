@@ -11,6 +11,10 @@ describe Sandal::Util do
     val.should == src
   end
 
+  it 'raises a token error if base64 strings contain padding' do
+    expect { Sandal::Util.base64_decode('eyJpc3MiOiJq=') }.to raise_error Sandal::TokenError
+  end
+
   it 'compares nil strings as equal' do
     Sandal::Util.secure_equals(nil, nil).should == true
   end

@@ -5,6 +5,7 @@ require 'multi_json'
 require 'openssl'
 
 require 'sandal/version'
+require 'sandal/claims'
 require 'sandal/sig'
 require 'sandal/enc'
 
@@ -43,21 +44,18 @@ module Sandal
 
   # Creates a signed JSON Web Token.
   #
-  # @param payload [String/Hash] The payload of the token. If a Hash then it will be encoded as JSON.
+  # @param payload [String/Hash] The payload of the token. Hashes will be encoded as JSON.
   # @param signer [Sandal::Sig] The token signer, which may be nil for an unsigned token.
   # @param header_fields [Hash] Header fields for the token (note: do not include 'alg').
   # @return [String] A signed JSON Web Token.
   def self.encode_token(payload, signer, header_fields = nil)
-    if header_fields && header_fields['enc']
-      raise ArgumentError, 'The header cannot contain an "enc" parameter.'
-    end
     signer ||= Sandal::Sig::None.instance
 
     header = {}
     header['alg'] = signer.name if signer.name != Sandal::Sig::None.instance.name
     header = header_fields.merge(header) if header_fields
 
-    payload = MultiJson.dump(payload) if payload.kind_of?(Hash)
+    payload = MultiJson.dump(payload) unless payload.is_a?(String)
 
     encoded_header = Sandal::Util.base64_encode(MultiJson.dump(header))
     encoded_payload = Sandal::Util.base64_encode(payload)
@@ -86,45 +84,30 @@ module Sandal
   # Decodes and validates a JSON Web Token.
   #
   # The block is called with the token header as the first parameter, and should return the appropriate
-  # {Sandal::Sig} to verify the signature. It can optionally have a second options parameter which can
+  # {Sandal::Sig} to validate the signature. It can optionally have a second options parameter which can
   # be used to override the {DEFAULT_OPTIONS} on a per-token basis.
   #
   # @param token [String] The encoded JSON Web Token.
   # @yieldparam header [Hash] The JWT header values.
   # @yieldparam options [Hash] (Optional) A hash that can be used to override the default options.
-  # @yieldreturn [Sandal::Sig] The signature verifier.
+  # @yieldreturn [Sandal::Sig] The signature validator.
   # @return [Hash/String] The payload of the token as a Hash if it was JSON, otherwise as a String.
-  # @raise [ArgumentError] The token parameter is nil or empty, or the block has the wrong arity.
-  # @raise [TokenError] The token format is invalid, or validation of the token failed.
-  def self.decode_token(token, &block)
-    raise ArgumentError, 'A token is required.' unless token && token.length > 0
+  # @raise [Sandal::TokenError] The token format is invalid, or validation of the token failed.
+  def self.decode_token(token)
     parts = token.split('.')
-    raise TokenError, 'Invalid token format.' unless [2, 3].include?(parts.length)
-    begin
-      header = MultiJson.load(Sandal::Util.base64_decode(parts[0]))
-      payload = Sandal::Util.base64_decode(parts[1])
-      signature = if parts.length > 2 then Sandal::Util.base64_decode(parts[2]) else '' end
-    rescue
-      raise TokenError, 'Invalid token encoding.'
-    end
+    header, payload, signature = decode_jws_parts(parts)
 
     options = DEFAULT_OPTIONS.clone
-    if block
-      case block.arity
-      when 1 then verifier = block.call(header)
-      when 2 then verifier = block.call(header, options)
-      else raise ArgumentError, 'Incorrect number of block parameters.'
-      end
-    end    
-    verifier ||= Sandal::Sig::None.instance
+    validator = yield header, options if block_given?
+    validator ||= Sandal::Sig::None.instance
 
     if options[:validate_signature]
       secured_input = parts.take(2).join('.')
-      raise TokenError, 'Invalid signature.' unless verifier.verify(signature, secured_input)
+      raise TokenError, 'Invalid signature.' unless validator.valid?(signature, secured_input)
     end
 
-    claims = MultiJson.load(payload) rescue nil
-    validate_claims(claims, options) if claims
+    claims = MultiJson.load(payload) rescue nil unless header['cty'] == 'JWT'
+    claims.extend(Sandal::Claims).validate_claims(options) if claims
 
     claims || payload
   end
@@ -152,54 +135,17 @@ module Sandal
 
   private
 
-  # Validates token claims according to the options
-  def self.validate_claims(claims, options)
-    validate_expires(claims, options)
-    validate_not_before(claims, options)
-    validate_issuer(claims, options)
-    validate_audience(claims, options)
-  end
-
-  # Validates the 'exp' claim.
-  def self.validate_expires(claims, options)
-    if options[:validate_exp] && claims['exp']
-      begin
-        exp = Time.at(claims['exp'])
-      rescue
-        raise TokenError, 'The "exp" claim is invalid.'
-      end
-      raise TokenError, 'The token has expired.' unless exp > (Time.now - options[:max_clock_skew])
+  # Decodes the parts of a JWS token.
+  def self.decode_jws_parts(parts)
+    raise TokenError, 'Invalid token format.' unless [2, 3].include?(parts.length)
+    begin
+      header = MultiJson.load(Sandal::Util.base64_decode(parts[0]))
+      payload = Sandal::Util.base64_decode(parts[1])
+      signature = if parts.length > 2 then Sandal::Util.base64_decode(parts[2]) else '' end
+    rescue
+      raise TokenError, 'Invalid token encoding.'
     end
-  end
-
-  # Validates the 'nbf' claim
-  def self.validate_not_before(claims, options)
-    if options[:validate_nbf] && claims['nbf']
-      begin
-        nbf = Time.at(claims['nbf'])
-      rescue
-        raise TokenError, 'The "nbf" claim is invalid.'
-      end
-      raise TokenError, 'The token is not valid yet.' unless nbf < (Time.now + options[:max_clock_skew])
-    end
-  end
-
-  # Validates the 'iss' claim.
-  def self.validate_issuer(claims, options)
-    valid_iss = options[:valid_iss]
-    if valid_iss && valid_iss.length > 0
-      raise TokenError, 'The issuer is invalid.' unless valid_iss.include?(claims['iss'])
-    end
-  end
-
-  # Validates the 'aud' claim.
-  def self.validate_audience(claims, options)
-    valid_aud = options[:valid_aud]
-    if valid_aud && valid_aud.length > 0
-      aud = claims['aud']
-      aud = [aud] unless aud.kind_of?(Array)
-      raise TokenError, 'The audence is invalid.' unless (aud & valid_aud).length > 0
-    end
+    return header, payload, signature
   end
 
 end

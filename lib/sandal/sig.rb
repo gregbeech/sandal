@@ -15,12 +15,12 @@ module Sandal
       raise NotImplementedError, "#{@name}.sign is not implemented."
     end
 
-    # Verifies a payload signature and returns whether the signature matches.
+    # Validates a payload signature and returns whether the signature matches.
     #
     # @param signature [String] The signature to verify.
     # @param payload [String] The payload of the token.
     # @return [Boolean] true if the signature is correct; otherwise false.
-    def verify(signature, payload)
+    def valid?(signature, payload)
       raise NotImplementedError, "#{@name}.verify is not implemented."
     end
 
@@ -42,12 +42,12 @@ module Sandal
         ''
       end
 
-      # Verifies that a signature is nil or empty.
+      # Validates that a signature is nil or empty.
       #
       # @param signature [String] The signature to verify.
       # @param payload [String] This parameter is ignored.
       # @return [Boolean] `true` if the signature is nil or empty; otherwise `false`.
-      def verify(signature, payload)
+      def valid?(signature, payload)
         signature.nil? || signature.length == 0
       end
 

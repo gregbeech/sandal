@@ -20,8 +20,8 @@ module Sandal
         OpenSSL::HMAC.digest(@digest, @key, payload)
       end
 
-      # Verifies a payload signature and returns whether the signature matches.
-      def verify(signature, payload)
+      # Validates a payload signature and returns whether the signature matches.
+      def valid?(signature, payload)
         Sandal::Util.secure_equals(sign(payload), signature)
       end
 

@@ -21,12 +21,20 @@ module Sandal
     end
 
     # Base64 encodes a string, in compliance with the JWT specification.
+    #
+    # @param s [String] The string to encode.
+    # @return [String] The encoded base64 string.
     def self.base64_encode(s)
       Base64.urlsafe_encode64(s).gsub(%r{=+$}, '')
     end
 
     # Base64 decodes a string, in compliance with the JWT specification.
+    #
+    # @param s [String] The base64 string to decode.
+    # @return [String] The decoded string.
+    # @raise [Sandal::TokenError] The base64 string contains padding.
     def self.base64_decode(s)
+      raise Sandal::TokenError, 'Base64 strings cannot contain padding.' if s.end_with?('=')
       padding_length = (4 - (s.length % 4)) % 4
       padding = '=' * padding_length
       Base64.urlsafe_decode64(s + padding)

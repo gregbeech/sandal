@@ -27,12 +27,12 @@ describe Sandal do
 
   it 'decodes non-JSON payloads to a String' do
     token = Sandal.encode_token('not valid json', nil)
-    Sandal.decode_token(token).class.should == String
+    Sandal.decode_token(token).class.should.kind_of? String
   end
 
   it 'decodes JSON payloads to a Hash' do
     token = Sandal.encode_token({ 'valid' => 'json' }, nil)
-    Sandal.decode_token(token).class.should == Hash
+    Sandal.decode_token(token).class.should.kind_of? Hash
   end
 
   it 'raises a token error when the expiry date is far in the past' do

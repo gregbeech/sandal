@@ -24,8 +24,8 @@ module Sandal
         @key.sign(@digest, payload)
       end
 
-      # Verifies a payload signature and returns whether the signature matches.
-      def verify(signature, payload)
+      # Validates a payload signature and returns whether the signature matches.
+      def valid?(signature, payload)
         @key.verify(@digest, signature, payload)
       end
 
