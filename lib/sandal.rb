@@ -15,6 +15,9 @@ module Sandal
   # The error that is raised when a token is invalid.
   class TokenError < StandardError; end
 
+  # The error that is raised when a claim within a token is invalid.
+  class ClaimError < TokenError; end
+
   # The default options for token handling.
   #
   # max_clock_skew:: The maximum clock skew, in seconds, when validating times.

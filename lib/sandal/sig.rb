@@ -11,18 +11,14 @@ module Sandal
     #
     # @param payload [String] The payload of the token to sign.
     # @return [String] The signature.
-    def sign(payload)
-      raise NotImplementedError, "#{@name}.sign is not implemented."
-    end
+    def sign(payload); end
 
     # Validates a payload signature and returns whether the signature matches.
     #
     # @param signature [String] The signature to verify.
     # @param payload [String] The payload of the token.
     # @return [Boolean] true if the signature is correct; otherwise false.
-    def valid?(signature, payload)
-      raise NotImplementedError, "#{@name}.verify is not implemented."
-    end
+    def valid?(signature, payload); end
 
     # The 'none' JWA signature method.
     class None

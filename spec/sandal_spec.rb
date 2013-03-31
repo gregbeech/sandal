@@ -35,14 +35,14 @@ describe Sandal do
     Sandal.decode_token(token).class.should.kind_of? Hash
   end
 
-  it 'raises a token error when the expiry date is far in the past' do
+  it 'raises a claim error when the expiry date is far in the past' do
     token = Sandal.encode_token({ 'exp' => (Time.now - 600).to_i }, nil)
-    expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
+    expect { Sandal.decode_token(token) }.to raise_error Sandal::ClaimError
   end
 
-  it 'raises a token error when the expiry date is invalid' do
+  it 'raises a claim error when the expiry date is invalid' do
     token = Sandal.encode_token({ 'exp' => 'invalid value' }, nil)
-    expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
+    expect { Sandal.decode_token(token) }.to raise_error Sandal::ClaimError
   end
 
   it 'does not raise an error when the expiry date is far in the past but validation is disabled' do
@@ -60,14 +60,14 @@ describe Sandal do
     Sandal.decode_token(token)
   end
 
-  it 'raises a token error when the not-before date is far in the future' do
+  it 'raises a claim error when the not-before date is far in the future' do
     token = Sandal.encode_token({ 'nbf' => (Time.now + 600).to_i }, nil)
-    expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
+    expect { Sandal.decode_token(token) }.to raise_error Sandal::ClaimError
   end
 
-  it 'raises a token error when the not-before date is invalid' do
+  it 'raises a claim error when the not-before date is invalid' do
     token = Sandal.encode_token({ 'nbf' => 'invalid value' }, nil)
-    expect { Sandal.decode_token(token) }.to raise_error Sandal::TokenError
+    expect { Sandal.decode_token(token) }.to raise_error Sandal::ClaimError
   end
 
   it 'does not raise an error when the not-before date is far in the future but validation is disabled' do
@@ -85,12 +85,12 @@ describe Sandal do
     Sandal.decode_token(token)
   end
 
-  it 'raises a token error when the issuer is not valid' do
+  it 'raises a claim error when the issuer is not valid' do
     token = Sandal.encode_token({ 'iss' => 'example.org' }, nil)
     expect { Sandal.decode_token(token) do |header, options| 
       options[:valid_iss] = ['example.net'] 
       nil
-    end }.to raise_error Sandal::TokenError
+    end }.to raise_error Sandal::ClaimError
   end
 
   it 'does not raise an error when the issuer is valid' do
@@ -101,20 +101,20 @@ describe Sandal do
     end
   end
 
-  it 'raises a token error when the audience string is not valid' do
+  it 'raises a claim error when the audience string is not valid' do
     token = Sandal.encode_token({ 'aud' => 'example.com' }, nil)
     expect { Sandal.decode_token(token) do |header, options| 
       options[:valid_aud] = ['example.net'] 
       nil
-    end }.to raise_error Sandal::TokenError
+    end }.to raise_error Sandal::ClaimError
   end
 
-  it 'raises a token error when the audience array is not valid' do
+  it 'raises a claim error when the audience array is not valid' do
     token = Sandal.encode_token({ 'aud' => ['example.org', 'example.com'] }, nil)
     expect { Sandal.decode_token(token) do |header, options| 
       options[:valid_aud] = ['example.net'] 
       nil
-    end }.to raise_error Sandal::TokenError
+    end }.to raise_error Sandal::ClaimError
   end
 
   it 'does not raise an error when the audience string is valid' do

@@ -2,8 +2,9 @@
 
 Features:
 
-- Changed from json to multi_json.
-- Added a new Claims module which can be mixed in.
+- Changed from json to multi_json for improved compatibility.
+- New Claims module can add claims functionality to Hash-like objects.
+- New ClaimError type for claim validation errors.
 
 Bug fixes:
 
