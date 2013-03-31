@@ -1,19 +1,18 @@
-require 'multi_json'
-
 module Sandal
-  # A module that can be mixed into a Hash-like object to provide claims-related functionality.
+  # A module that can be mixed into Hash-like objects to provide claims-related functionality.
   module Claims
 
     # Validates the set of claims.
     #
     # @param options [Hash] The validation options (see {Sandal::DEFAULT_OPTIONS} for details).
-    # @return [void].
+    # @return [Hash] A reference to self.
     # @raise [Sandal::ClaimError] One or more claims is invalid.
     def validate_claims(options)
       validate_exp(options[:max_clock_skew]) if options[:validate_exp]
       validate_nbf(options[:max_clock_skew]) if options[:validate_nbf]
       validate_iss(options[:valid_iss])
       validate_aud(options[:valid_aud])
+      self
     end
 
     # Validates the expires claim.

@@ -1,29 +1,15 @@
 require 'singleton'
 
 module Sandal
-  # Common signature traits.
+  # Contains signature (JWS) functionality.
   module Sig
-
-    # @return [String] The JWA name of the algorithm.
-    attr_reader :name
-
-    # Signs a payload and returns the signature.
-    #
-    # @param payload [String] The payload of the token to sign.
-    # @return [String] The signature.
-    def sign(payload); end
-
-    # Validates a payload signature and returns whether the signature matches.
-    #
-    # @param signature [String] The signature to verify.
-    # @param payload [String] The payload of the token.
-    # @return [Boolean] true if the signature is correct; otherwise false.
-    def valid?(signature, payload); end
 
     # The 'none' JWA signature method.
     class None
-      include Sandal::Sig
       include Singleton
+
+      # @return [String] The JWA name of the algorithm.
+      attr_reader :name
 
       # Creates a new instance.
       def initialize
@@ -42,9 +28,9 @@ module Sandal
       #
       # @param signature [String] The signature to verify.
       # @param payload [String] This parameter is ignored.
-      # @return [Boolean] `true` if the signature is nil or empty; otherwise `false`.
+      # @return [Boolean] true if the signature is nil or empty; otherwise false.
       def valid?(signature, payload)
-        signature.nil? || signature.length == 0
+        signature.nil? || signature.empty?
       end
 
     end

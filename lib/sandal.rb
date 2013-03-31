@@ -3,11 +3,9 @@ $:.unshift('.')
 require 'base64'
 require 'multi_json'
 require 'openssl'
-
-require 'sandal/version'
 require 'sandal/claims'
-require 'sandal/sig'
-require 'sandal/enc'
+require 'sandal/util'
+require 'sandal/version'
 
 # A library for creating and reading JSON Web Tokens (JWT).
 module Sandal
@@ -48,7 +46,7 @@ module Sandal
   # Creates a signed JSON Web Token.
   #
   # @param payload [String/Hash] The payload of the token. Hashes will be encoded as JSON.
-  # @param signer [Sandal::Sig] The token signer, which may be nil for an unsigned token.
+  # @param signer [#name,#sign] The token signer, which may be nil for an unsigned token.
   # @param header_fields [Hash] Header fields for the token (note: do not include 'alg').
   # @return [String] A signed JSON Web Token.
   def self.encode_token(payload, signer, header_fields = nil)
@@ -93,7 +91,7 @@ module Sandal
   # @param token [String] The encoded JSON Web Token.
   # @yieldparam header [Hash] The JWT header values.
   # @yieldparam options [Hash] (Optional) A hash that can be used to override the default options.
-  # @yieldreturn [Sandal::Sig] The signature validator.
+  # @yieldreturn [#valid?] The signature validator.
   # @return [Hash/String] The payload of the token as a Hash if it was JSON, otherwise as a String.
   # @raise [Sandal::TokenError] The token format is invalid, or validation of the token failed.
   def self.decode_token(token)
@@ -109,10 +107,7 @@ module Sandal
       raise TokenError, 'Invalid signature.' unless validator.valid?(signature, secured_input)
     end
 
-    claims = MultiJson.load(payload) rescue nil unless header['cty'] == 'JWT'
-    claims.extend(Sandal::Claims).validate_claims(options) if claims
-
-    claims || payload
+    parse_and_validate(payload, header['cty'], options)
   end
 
   # Decrypts an encrypted JSON Web Token.
@@ -151,4 +146,17 @@ module Sandal
     return header, payload, signature
   end
 
+  # Parses the content of a token and validates the claims if is a JSON claim set.
+  def self.parse_and_validate(payload, content_type, options)
+    claims = MultiJson.load(payload) rescue nil unless content_type == 'JWT'
+    if claims
+      claims.extend(Sandal::Claims).validate_claims(options)
+    else
+      payload
+    end
+  end
+
 end
+
+require 'sandal/enc'
+require 'sandal/sig'
