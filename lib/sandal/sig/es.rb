@@ -69,7 +69,7 @@ module Sandal
       # @return [OpenSSL::BN, OpenSSL::BN] A pair of BNs.
       def self.decode_jws_signature(signature)
         n_length = signature.length / 2
-        s_to_n = lambda { |s| OpenSSL::BN.new(s.unpack('H*')[0], 16) }
+        s_to_n = -> s { OpenSSL::BN.new(s.unpack('H*')[0], 16) }
         r = s_to_n.call(signature[0..(n_length - 1)])
         s = s_to_n.call(signature[n_length..-1])
         return r, s
@@ -83,8 +83,20 @@ module Sandal
       # @return [String] The ASN.1 signature.
       def self.encode_jws_signature(r, s, prime_size)
         byte_count = (prime_size / 8.0).ceil
-        n_to_s = lambda { |n| [n.to_s(16)].pack('H*').rjust(byte_count, "\0") }
+        n_to_s = -> n { [n.to_s(16)].pack('H*').rjust(byte_count, "\0") }
         n_to_s.call(r) + n_to_s.call(s)
+      end
+
+      protected
+
+      # Ensures that a key has a specified curve name.
+      #
+      # @param key [OpenSSL::PKey::EC] The key.
+      # @param curve_name [String] The curve name.
+      # @return [void].
+      # @raise [ArgumentError] The key has a different curve name.
+      def ensure_curve(key, curve_name)
+        raise ArgumentError, "The key must be in the #{curve_name} group." unless key.group.curve_name == curve_name
       end
 
     end
@@ -96,7 +108,7 @@ module Sandal
       # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public). 
       # @raise [ArgumentError] The key is not in the "prime256v1" group.
       def initialize(key)
-        raise ArgumentError, 'The key must be in the prime256v1 group.' unless key.group.curve_name == 'prime256v1'
+        ensure_curve(key, 'prime256v1')
         super(256, 256, key)
       end
     end
@@ -108,7 +120,7 @@ module Sandal
       # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public). 
       # @raise [ArgumentError] The key is not in the "secp384r1" group.
       def initialize(key)
-        raise ArgumentError, 'The key must be in the secp384r1 group.' unless key.group.curve_name == 'secp384r1'
+        ensure_curve(key, 'secp384r1')
         super(384, 384, key)
       end
     end
@@ -120,7 +132,7 @@ module Sandal
       # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public). 
       # @raise [ArgumentError] The key is not in the "secp521r1" group.
       def initialize(key)
-        raise ArgumentError, 'The key must be in the secp521r1 group.' unless key.group.curve_name == 'secp521r1'
+        ensure_curve(key, 'secp521r1')
         super(512, 521, key)
       end
     end

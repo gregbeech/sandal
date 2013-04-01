@@ -87,6 +87,12 @@ describe Sandal::Sig::ES256 do
     validator.valid?(signature, data).should == false
   end
 
+  it 'raises an argument error if the key has the wrong curve' do
+    group = OpenSSL::PKey::EC::Group.new('secp384r1') 
+    private_key = OpenSSL::PKey::EC.new(group).generate_key
+    expect { Sandal::Sig::ES256.new(private_key) }.to raise_error ArgumentError
+  end
+
 end
 
 describe Sandal::Sig::ES384 do
@@ -101,6 +107,12 @@ describe Sandal::Sig::ES384 do
     public_key.public_key = private_key.public_key
     validator = Sandal::Sig::ES384.new(public_key)
     validator.valid?(signature, data).should == true
+  end
+
+  it 'raises an argument error if the key has the wrong curve' do
+    group = OpenSSL::PKey::EC::Group.new('secp521r1') 
+    private_key = OpenSSL::PKey::EC.new(group).generate_key
+    expect { Sandal::Sig::ES384.new(private_key) }.to raise_error ArgumentError
   end
 
 end
@@ -145,6 +157,12 @@ describe Sandal::Sig::ES512 do
     public_key.public_key = make_point(group, x, y)
     validator = Sandal::Sig::ES512.new(public_key)
     validator.valid?(signature, data).should == false
+  end
+
+  it 'raises an argument error if the key has the wrong curve' do
+    group = OpenSSL::PKey::EC::Group.new('prime256v1') 
+    private_key = OpenSSL::PKey::EC.new(group).generate_key
+    expect { Sandal::Sig::ES512.new(private_key) }.to raise_error ArgumentError
   end
 
 end
