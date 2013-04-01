@@ -1,9 +1,9 @@
-## 0.1.1
+## 0.1.1 (01 April 2013)
 
 Features:
 
-- Changed from json to multi_json for improved compatibility.
-- New Claims module can add claims functionality to Hash-like objects.
+- Changed from json to multi_json gem for improved compatibility.
+- New Claims module can add claims validation functionality to Hash-like objects.
 - New ClaimError type for claim validation errors.
 
 Bug fixes:
