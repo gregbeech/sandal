@@ -5,8 +5,13 @@ module Sandal
   module Enc
 
     # Base implementation of the AES/GCM family of encryption algorithms.
-    class AESGCM
-      include Sandal::Enc
+    class AGCM
+
+      # The JWA name of the encryption.
+      attr_reader :name
+
+      # The JWA algorithm used to encrypt the content master key.
+      attr_reader :alg
 
       def initialize(aes_size, key)
         raise NotImplementedException, 'AES-CGM is not yet implemented.'
@@ -23,14 +28,14 @@ module Sandal
     end
 
     # The AES-128-GCM encryption algorithm.
-    class AES128GCM < Sandal::Enc::AESGCM
+    class A128GCM < Sandal::Enc::AGCM
       def initialize(key)
         super(128, key)
       end
     end
 
     # The AES-256-GCM encryption algorithm.
-    class AES256GCM < Sandal::Enc::AESGCM
+    class A256GCM < Sandal::Enc::AGCM
       def initialize(key)
         super(256, key)
       end

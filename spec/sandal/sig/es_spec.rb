@@ -4,11 +4,6 @@ require 'openssl'
 # EC isn't implemented in jruby-openssl at the moment
 if defined? OpenSSL::PKey::EC
 
-def make_bn(arr)
-  hex_str = arr.pack('C*').unpack('H*')[0]
-  OpenSSL::BN.new(hex_str, 16)
-end
-
 def make_point(group, x, y)
   def pad(c)
     if c.length <= 64
