@@ -1,6 +1,3 @@
-$:.unshift('.')
-
-require 'base64'
 require 'multi_json'
 require 'openssl'
 require 'sandal/version'
