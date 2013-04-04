@@ -5,8 +5,8 @@ module Sandal
     # The JWA name of the encryption.
     attr_reader :name
 
-    # The JWA name of the algorithm.
-    attr_reader :alg_name
+    # The JWA algorithm used to encrypt the content master key.
+    attr_reader :alg
 
     # Encrypts a header and payload, and returns an encrypted token.
     def encrypt(header, payload)
@@ -21,5 +21,9 @@ module Sandal
   end
 end
 
-require 'sandal/enc/aescbc'
+require 'sandal/enc/aescbc_hs'
 require 'sandal/enc/aesgcm'
+
+require 'sandal/enc/alg/direct'
+require 'sandal/enc/alg/rsa1_5'
+require 'sandal/enc/alg/rsa_oaep'

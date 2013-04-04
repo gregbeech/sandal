@@ -3,9 +3,12 @@ $:.unshift('.')
 require 'base64'
 require 'multi_json'
 require 'openssl'
-require 'sandal/claims'
-require 'sandal/util'
 require 'sandal/version'
+require 'sandal/claims'
+require 'sandal/enc'
+require 'sandal/sig'
+require 'sandal/util'
+
 
 # A library for creating and reading JSON Web Tokens (JWT).
 module Sandal
@@ -43,7 +46,7 @@ module Sandal
     DEFAULT_OPTIONS.merge!(defaults)
   end
 
-  # Creates a signed JSON Web Token.
+  # Creates a signed JSON Web Token (JWS).
   #
   # @param payload [String/Hash] The payload of the token. Hashes will be encoded as JSON.
   # @param signer [#name,#sign] The token signer, which may be nil for an unsigned token.
@@ -55,19 +58,16 @@ module Sandal
     header = {}
     header['alg'] = signer.name if signer.name != Sandal::Sig::None.instance.name
     header = header_fields.merge(header) if header_fields
+    header = MultiJson.dump(header)
 
     payload = MultiJson.dump(payload) unless payload.is_a?(String)
 
-    encoded_header = Sandal::Util.base64_encode(MultiJson.dump(header))
-    encoded_payload = Sandal::Util.base64_encode(payload)
-    secured_input = [encoded_header, encoded_payload].join('.')
-
+    secured_input = [header, payload].map { |part| Sandal::Util.base64_encode(part) }.join('.')
     signature = signer.sign(secured_input)
-    encoded_signature = Sandal::Util.base64_encode(signature)
-    [secured_input, encoded_signature].join('.')
+    [secured_input, Sandal::Util.base64_encode(signature)].join('.')
   end
 
-  # Creates an encrypted JSON Web Token.
+  # Creates an encrypted JSON Web Token (JWE).
   #
   # @param payload [String] The payload of the token.
   # @param encrypter [Sandal::Enc] The token encrypter.
@@ -76,13 +76,13 @@ module Sandal
   def self.encrypt_token(payload, encrypter, header_fields = nil)
     header = {}
     header['enc'] = encrypter.name
-    header['alg'] = encrypter.alg_name
+    header['alg'] = encrypter.alg.name
     header = header_fields.merge(header) if header_fields
 
     encrypter.encrypt(header, payload)
   end
 
-  # Decodes and validates a JSON Web Token.
+  # Decodes and validates a signed JSON Web Token (JWS).
   #
   # The block is called with the token header as the first parameter, and should return the appropriate
   # {Sandal::Sig} to validate the signature. It can optionally have a second options parameter which can
@@ -96,7 +96,7 @@ module Sandal
   # @raise [Sandal::TokenError] The token format is invalid, or validation of the token failed.
   def self.decode_token(token)
     parts = token.split('.')
-    header, payload, signature = decode_jws_parts(parts)
+    header, payload, signature = decode_jws_token_parts(parts)
 
     options = DEFAULT_OPTIONS.clone
     validator = yield header, options if block_given?
@@ -110,40 +110,51 @@ module Sandal
     parse_and_validate(payload, header['cty'], options)
   end
 
-  # Decrypts an encrypted JSON Web Token.
+  # Decrypts and validates an encrypted JSON Web Token (JWE).
   #
-  # **NOTE: This method is likely to change, to allow more validation options**
-  def self.decrypt_token(encrypted_token, &enc_finder)
-    parts = encrypted_token.split('.')
-    raise ArgumentError, 'Invalid token format.' unless parts.length == 5
-    begin
-      header = MultiJson.load(Sandal::Util.base64_decode(parts[0]))
-      encrypted_key = Sandal::Util.base64_decode(parts[1])
-      iv = Sandal::Util.base64_decode(parts[2])
-      ciphertext = Sandal::Util.base64_decode(parts[3])
-      integrity_value = Sandal::Util.base64_decode(parts[4])
-    rescue
-      raise ArgumentError, 'Invalid token encoding.'
-    end
+  # @param token [String] The encrypted JSON Web Token.
+  # @yieldparam header [Hash] The JWT header values.
+  # @yieldparam options [Hash] (Optional) A hash that can be used to override the default options.
+  # @yieldreturn [#decrypt] The token decrypter.
+  # @return [Hash/String] The payload of the token as a Hash if it was JSON, otherwise as a String.
+  # @raise [Sandal::TokenError] The token format is invalid, or decryption/validation of the token failed.
+  def self.decrypt_token(token)
+    parts = token.split('.')
+    header, encrypted_key, iv, ciphertext, integrity_value = decode_jwe_token_parts(parts)
 
-    enc = enc_finder.call(header)
-    raise TokenError, 'No decryptor was found.' unless enc
-    enc.decrypt(encrypted_key, iv, ciphertext, parts.take(4).join('.'), integrity_value)
+    options = DEFAULT_OPTIONS.clone
+    decrypter = yield header, options if block_given?
+
+    secured_input = parts.take(4).join('.')
+    payload = decrypter.decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
+
+    parse_and_validate(payload, header['cty'], options)
   end
 
-  private
+private
 
   # Decodes the parts of a JWS token.
-  def self.decode_jws_parts(parts)
-    raise TokenError, 'Invalid token format.' unless [2, 3].include?(parts.length)
-    begin
-      header = MultiJson.load(Sandal::Util.base64_decode(parts[0]))
-      payload = Sandal::Util.base64_decode(parts[1])
-      signature = if parts.length > 2 then Sandal::Util.base64_decode(parts[2]) else '' end
-    rescue
-      raise TokenError, 'Invalid token encoding.'
-    end
-    return header, payload, signature
+  def self.decode_jws_token_parts(parts)
+    parts = decode_token_parts(parts)
+    parts << '' if parts.length == 2
+    raise TokenError, 'Invalid token format.' unless parts.length == 3
+    parts
+  end
+
+  # Decodes the parts of a JWE token.
+  def self.decode_jwe_token_parts(parts)
+    parts = decode_token_parts(parts)
+    raise TokenError, 'Invalid token format.' unless parts.length == 5
+    parts
+  end
+
+  # Decodes the parts of a token.
+  def self.decode_token_parts(parts)
+    parts = parts.map { |part| Sandal::Util.base64_decode(part) }
+    parts[0] = MultiJson.load(parts[0])
+    parts
+  rescue
+    raise TokenError, 'Invalid token encoding.'
   end
 
   # Parses the content of a token and validates the claims if is a JSON claim set.
@@ -157,6 +168,3 @@ module Sandal
   end
 
 end
-
-require 'sandal/enc'
-require 'sandal/sig'

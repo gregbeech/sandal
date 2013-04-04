@@ -4,30 +4,25 @@ require 'sandal/util'
 module Sandal
   module Enc
 
-    # Base implementation of the AES/CBC family of encryption algorithms.
-    class AESCBC
+    # Base implementation of the AES/CBC+HMAC-SHA family of encryption algorithms.
+    class AESCBC_HS
       include Sandal::Enc
 
-      def initialize(aes_size, key)
-        raise ArgumentError, 'A key is required.' unless key
+      def initialize(aes_size, sha_size, alg)
         @aes_size = aes_size
-        @sha_size = aes_size * 2 # TODO: Any smarter way to do this?
+        @sha_size = sha_size
         @name = "A#{aes_size}CBC+HS#{@sha_size}"
-        @alg_name = "RSA1_5" # TODO: From key?
         @cipher_name = "aes-#{aes_size}-cbc"
-        @key = key
+        @alg = alg
         @digest = OpenSSL::Digest.new("sha#{@sha_size}")
       end
 
       def encrypt(header, payload)
         cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
-        content_master_key = cipher.random_key # TODO: Check with the spec if this is long enough
+        content_master_key = @alg.respond_to?(:cmk) ? @alg.cmk : cipher.random_key
         iv = cipher.random_iv
 
-        # TODO: Need to think about how this works with pre-shared symmetric keys - I'd originally thought
-        # this wouldn't be a common use case, but in cases where the recipient is also the issuer (e.g.
-        # an OAuth refresh token) then it would make a lot of sense.
-        encrypted_key = @key.public_encrypt(content_master_key)
+        encrypted_key = @alg.encrypt_cmk(content_master_key)
         encoded_encrypted_key = Sandal::Util.base64_encode(encrypted_key)
         encoded_iv = Sandal::Util.base64_encode(iv)
 
@@ -45,7 +40,7 @@ module Sandal
       end
 
       def decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
-        content_master_key = @key.private_decrypt(encrypted_key)
+        content_master_key = @alg.decrypt(encrypted_key)
 
         content_integrity_key = derive_content_key('Integrity', content_master_key, @sha_size)
         computed_integrity_value = OpenSSL::HMAC.digest(@digest, content_integrity_key, secured_input)
@@ -73,17 +68,17 @@ module Sandal
 
     end
 
-    # The AES-128-CBC encryption algorithm.
-    class AES128CBC < Sandal::Enc::AESCBC
+    # The AES-128-CBC+HMAC-SHA256 encryption algorithm.
+    class AES128CBC_HS256 < Sandal::Enc::AESCBC_HS
       def initialize(key)
-        super(128, key)
+        super(128, 256, key)
       end
     end
 
-    # The AES-256-CBC encryption algorithm.
-    class AES256CBC < Sandal::Enc::AESCBC
+    # The AES-256-CBC+HMAC-SHA512 encryption algorithm.
+    class AES256CBC_HS512 < Sandal::Enc::AESCBC_HS
       def initialize(key)
-        super(256, key)
+        super(256, 512, key)
       end
     end
 
