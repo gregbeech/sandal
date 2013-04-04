@@ -40,7 +40,11 @@ module Sandal
       end
 
       def decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
-        content_master_key = @alg.decrypt_cmk(encrypted_key)
+        begin
+          content_master_key = @alg.decrypt_cmk(encrypted_key)
+        rescue
+          raise Sandal::TokenError, 'Failed to decrypt content master key.'
+        end
         
         content_integrity_key = derive_integrity_key(content_master_key)
         computed_integrity_value = compute_integrity_value(content_integrity_key, secured_input)
