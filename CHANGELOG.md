@@ -1,3 +1,14 @@
+## 0.2.0
+
+Features:
+
+- Added support for AES/CBC and AES/GCM encryption methods.
+- Added RSA1_5, RSA-OAEP and direct key protection algorithms.
+
+Bug fixes:
+
+- Sandal::Sig::ES class is now not included in jruby as ECDSA isn't supported.
+
 ## 0.1.1 (01 April 2013)
 
 Features:
