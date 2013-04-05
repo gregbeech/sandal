@@ -38,7 +38,6 @@ module Sandal
       end
 
       def decrypt(parts, decoded_parts)
-        puts "OpenSSL::OPENSSL_VERSION = #{OpenSSL::OPENSSL_VERSION}"
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
         cipher.key = @alg.decrypt_cmk(decoded_parts[1])
         cipher.iv = decoded_parts[2]

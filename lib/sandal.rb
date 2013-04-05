@@ -23,7 +23,6 @@ module Sandal
   # valid_aud:: A list of valid audiences, if audience validation is required.
   # validate_exp:: Whether the expiry date of the token is validated.
   # validate_nbf:: Whether the not-before date of the token is validated.
-  # validate_integrity:: Whether the integrity value of encrypted (JWE) tokens is validated.
   # validate_signature:: Whether the signature of signed (JWS) tokens is validated.
   DEFAULT_OPTIONS = {
     max_clock_skew: 300,
@@ -31,7 +30,6 @@ module Sandal
     valid_aud: [],
     validate_exp: true,
     validate_nbf: true,
-    validate_integrity: true,
     validate_signature: true
   }
 
@@ -122,8 +120,6 @@ module Sandal
 
     options = DEFAULT_OPTIONS.clone
     decrypter = yield header, options if block_given?
-
-    # TODO: Need to take the options into account
 
     payload = decrypter.decrypt(parts, decoded_parts)
     parse_and_validate(payload, header['cty'], options)
