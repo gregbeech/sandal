@@ -13,6 +13,11 @@ module Sandal
       # The JWA algorithm used to encrypt the content master key.
       attr_reader :alg
 
+      # Creates a new instance; it's probably easier to use one of the subclass constructors.
+      #
+      # @param aes_size [Integer] The size of the AES algorithm.
+      # @param sha_size [Integer] The size of the SHA algorithm.
+      # @param key [#name, #encrypt_cmk, #decrypt_cmk] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(aes_size, sha_size, alg)
         @aes_size = aes_size
         @sha_size = sha_size
@@ -39,21 +44,17 @@ module Sandal
         secured_input << '.' << Sandal::Util.base64_encode(integrity_value)
       end
 
-      def decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
-        begin
-          content_master_key = @alg.decrypt_cmk(encrypted_key)
-        rescue
-          raise Sandal::TokenError, 'Failed to decrypt content master key.'
-        end
+      def decrypt(parts, decoded_parts)
+        content_master_key = @alg.decrypt_cmk(decoded_parts[1])
         
         content_integrity_key = derive_integrity_key(content_master_key)
-        computed_integrity_value = compute_integrity_value(content_integrity_key, secured_input)
-        raise Sandal::TokenError, 'Invalid integrity value.' unless integrity_value == computed_integrity_value
+        computed_integrity_value = compute_integrity_value(content_integrity_key, parts.take(4).join('.'))
+        raise Sandal::TokenError, 'Invalid integrity value.' unless decoded_parts[4] == computed_integrity_value
 
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
         cipher.key = derive_encryption_key(content_master_key)
-        cipher.iv = iv
-        cipher.update(ciphertext) + cipher.final
+        cipher.iv = decoded_parts[2]
+        cipher.update(decoded_parts[3]) + cipher.final
       end
 
     private

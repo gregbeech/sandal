@@ -2,7 +2,7 @@ require 'helper'
 require 'openssl'
 
 # EC isn't implemented in jruby-openssl at the moment
-if defined? OpenSSL::PKey::EC
+if defined? Sandal::Sig::ES
 
 def make_point(group, x, y)
   def pad(c)

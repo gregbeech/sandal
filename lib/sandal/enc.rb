@@ -5,7 +5,5 @@ module Sandal
 end
 
 require 'sandal/enc/acbc_hs'
-require 'sandal/enc/agcm'
-require 'sandal/enc/alg/direct'
-require 'sandal/enc/alg/rsa1_5'
-require 'sandal/enc/alg/rsa_oaep'
+require 'sandal/enc/agcm' unless RUBY_VERSION < '2.0.0'
+require 'sandal/enc/alg'

@@ -6,7 +6,8 @@ require 'securerandom'
 
 describe Sandal::Enc::A128CBC_HS256 do
 
-  context 'using the RSA key from JWE section A.2' do
+  # these tests don't run with jruby as it errors when you try and set rsa.d parameter directly
+  context 'using the example RSA key from JWE section A.2', :jruby_incompatible do
 
     before :all do
       @rsa = OpenSSL::PKey::RSA.new(2048)
@@ -14,9 +15,6 @@ describe Sandal::Enc::A128CBC_HS256 do
       @rsa.e = make_bn([1, 0, 1])
       @rsa.d = make_bn([84, 80, 150, 58, 165, 235, 242, 123, 217, 55, 38, 154, 36, 181, 221, 156, 211, 215, 100, 164, 90, 88, 40, 228, 83, 148, 54, 122, 4, 16, 165, 48, 76, 194, 26, 107, 51, 53, 179, 165, 31, 18, 198, 173, 78, 61, 56, 97, 252, 158, 140, 80, 63, 25, 223, 156, 36, 203, 214, 252, 120, 67, 180, 167, 3, 82, 243, 25, 97, 214, 83, 133, 69, 16, 104, 54, 160, 200, 41, 83, 164, 187, 70, 153, 111, 234, 242, 158, 175, 28, 198, 48, 211, 45, 148, 58, 23, 62, 227, 74, 52, 117, 42, 90, 41, 249, 130, 154, 80, 119, 61, 26, 193, 40, 125, 10, 152, 174, 227, 225, 205, 32, 62, 66, 6, 163, 100, 99, 219, 19, 253, 25, 105, 80, 201, 29, 252, 157, 237, 69, 1, 80, 171, 167, 20, 196, 156, 109, 249, 88, 0, 3, 152, 38, 165, 72, 87, 6, 152, 71, 156, 214, 16, 71, 30, 82, 51, 103, 76, 218, 63, 9, 84, 163, 249, 91, 215, 44, 238, 85, 101, 240, 148, 1, 82, 224, 91, 135, 105, 127, 84, 171, 181, 152, 210, 183, 126, 24, 46, 196, 90, 173, 38, 245, 219, 186, 222, 27, 240, 212, 194, 15, 66, 135, 226, 178, 190, 52, 245, 74, 65, 224, 81, 100, 85, 25, 204, 165, 203, 187, 175, 84, 100, 82, 15, 11, 23, 202, 151, 107, 54, 41, 207, 3, 136, 229, 134, 131, 93, 139, 50, 182, 204, 93, 130, 89])
     end
-
-    # exclude these tests from jruby, as it doesn't allow the rsa.d (private key) parameter to be modified directly
-    if RUBY_PLATFORM != 'java'
 
     it 'can decrypt the example token' do
       token = 'eyJhbGciOiJSU0ExXzUiLCJlbmMiOiJBMTI4Q0JDK0hTMjU2In0.ZmnlqWgjXyqwjr7cXHys8F79anIUI6J2UWdAyRQEcGBU-KPHsePM910_RoTDGu1IW40Dn0dvcdVEjpJcPPNIbzWcMxDi131Ejeg-b8ViW5YX5oRdYdiR4gMSDDB3mbkInMNUFT-PK5CuZRnHB2rUK5fhPuF6XFqLLZCG5Q_rJm6Evex-XLcNQAJNa1-6CIU12Wj3mPExxw9vbnsQDU7B4BfmhdyiflLA7Ae5ZGoVRl3A__yLPXxRjHFhpOeDp_adx8NyejF5cz9yDKULugNsDMdlHeJQOMGVLYaSZt3KP6aWNSqFA1PHDg-10ceuTEtq_vPE4-Gtev4N4K4Eudlj4Q.AxY8DCtDaGlsbGljb3RoZQ.Rxsjg6PIExcmGSF7LnSEkDqWIKfAw1wZz2XpabV5PwQsolKwEauWYZNE9Q1hZJEZ.8LXqMd0JLGsxMaB5uoNaMpg7uUW_p40RlaZHCwMIyzk'
@@ -35,9 +33,7 @@ describe Sandal::Enc::A128CBC_HS256 do
       end }.to raise_error Sandal::TokenError, 'Invalid integrity value.'
     end
 
-    end
-
-  end  
+  end
 
   it 'raises a token error when the RSA keys JWE section A.2 are changed' do
     token = 'eyJhbGciOiJSU0ExXzUiLCJlbmMiOiJBMTI4Q0JDK0hTMjU2In0.ZmnlqWgjXyqwjr7cXHys8F79anIUI6J2UWdAyRQEcGBU-KPHsePM910_RoTDGu1IW40Dn0dvcdVEjpJcPPNIbzWcMxDi131Ejeg-b8ViW5YX5oRdYdiR4gMSDDB3mbkInMNUFT-PK5CuZRnHB2rUK5fhPuF6XFqLLZCG5Q_rJm6Evex-XLcNQAJNa1-6CIU12Wj3mPExxw9vbnsQDU7B4BfmhdyiflLA7Ae5ZGoVRl3A__yLPXxRjHFhpOeDp_adx8NyejF5cz9yDKULugNsDMdlHeJQOMGVLYaSZt3KP6aWNSqFA1PHDg-10ceuTEtq_vPE4-Gtev4N4K4Eudlj4Q.AxY8DCtDaGlsbGljb3RoZQ.Rxsjg6PIExcmGSF7LnSEkDqWIKfAw1wZz2XpabV5PwQsolKwEauWYZNE9Q1hZJEZ.8LXqMd0JLGsxMaB5uoNaMpg7uUW_p40RlaZHCwMIyzk'
@@ -45,7 +41,7 @@ describe Sandal::Enc::A128CBC_HS256 do
       rsa = OpenSSL::PKey::RSA.new(2048)
       alg = Sandal::Enc::Alg::RSA1_5.new(rsa)
       encrypter = Sandal::Enc::A128CBC_HS256.new(alg)
-    end }.to raise_error Sandal::TokenError, 'Failed to decrypt content master key.'
+    end }.to raise_error Sandal::TokenError, 'Failed to decrypt the content master key.'
   end
 
   it 'can encrypt and decrypt tokens with the "dir" algorithm' do

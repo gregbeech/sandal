@@ -38,6 +38,6 @@ module Sandal
   end
 end
 
-require 'sandal/sig/es'
+require 'sandal/sig/es' unless RUBY_PLATFORM == 'java'
 require 'sandal/sig/hs'
 require 'sandal/sig/rs'

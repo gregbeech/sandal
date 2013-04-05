@@ -64,21 +64,6 @@ module Sandal
     [secured_input, Sandal::Util.base64_encode(signature)].join('.')
   end
 
-  # Creates an encrypted JSON Web Token (JWE).
-  #
-  # @param payload [String] The payload of the token.
-  # @param encrypter [Sandal::Enc] The token encrypter.
-  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg' or 'enc').
-  # @return [String] An encrypted JSON Web Token.
-  def self.encrypt_token(payload, encrypter, header_fields = nil)
-    header = {}
-    header['enc'] = encrypter.name
-    header['alg'] = encrypter.alg.name
-    header = header_fields.merge(header) if header_fields
-
-    encrypter.encrypt(header, payload)
-  end
-
   # Decodes and validates a signed JSON Web Token (JWS).
   #
   # The block is called with the token header as the first parameter, and should return the appropriate
@@ -107,6 +92,21 @@ module Sandal
     parse_and_validate(payload, header['cty'], options)
   end
 
+  # Creates an encrypted JSON Web Token (JWE).
+  #
+  # @param payload [String] The payload of the token.
+  # @param encrypter [Sandal::Enc] The token encrypter.
+  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg' or 'enc').
+  # @return [String] An encrypted JSON Web Token.
+  def self.encrypt_token(payload, encrypter, header_fields = nil)
+    header = {}
+    header['enc'] = encrypter.name
+    header['alg'] = encrypter.alg.name
+    header = header_fields.merge(header) if header_fields
+
+    encrypter.encrypt(header, payload)
+  end
+
   # Decrypts and validates an encrypted JSON Web Token (JWE).
   #
   # @param token [String] The encrypted JSON Web Token.
@@ -117,14 +117,15 @@ module Sandal
   # @raise [Sandal::TokenError] The token format is invalid, or decryption/validation of the token failed.
   def self.decrypt_token(token)
     parts = token.split('.')
-    header, encrypted_key, iv, ciphertext, integrity_value = decode_jwe_token_parts(parts)
+    decoded_parts = decode_jwe_token_parts(parts)
+    header = decoded_parts[0]
 
     options = DEFAULT_OPTIONS.clone
     decrypter = yield header, options if block_given?
 
-    secured_input = parts.take(4).join('.')
-    payload = decrypter.decrypt(encrypted_key, iv, ciphertext, secured_input, integrity_value)
+    # TODO: Need to take the options into account
 
+    payload = decrypter.decrypt(parts, decoded_parts)
     parse_and_validate(payload, header['cty'], options)
   end
 
@@ -156,7 +157,9 @@ private
 
   # Parses the content of a token and validates the claims if is a JSON claim set.
   def self.parse_and_validate(payload, content_type, options)
-    claims = MultiJson.load(payload) rescue nil unless content_type == 'JWT'
+    return payload if content_type == 'JWT'
+
+    claims = MultiJson.load(payload) rescue nil
     if claims
       claims.extend(Sandal::Claims).validate_claims(options)
     else
