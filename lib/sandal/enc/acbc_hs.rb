@@ -58,9 +58,13 @@ module Sandal
         end
 
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
-        cipher.key = derive_encryption_key(cmk)
-        cipher.iv = decoded_parts[2]
-        cipher.update(decoded_parts[3]) + cipher.final
+        begin
+          cipher.key = derive_encryption_key(cmk)
+          cipher.iv = decoded_parts[2]
+          cipher.update(decoded_parts[3]) + cipher.final
+        rescue OpenSSL::Cipher::CipherError
+          raise Sandal::TokenError, 'Invalid token.'
+        end
       end
 
     private

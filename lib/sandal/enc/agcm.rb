@@ -41,11 +41,15 @@ module Sandal
 
       def decrypt(parts, decoded_parts)
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
-        cipher.key = @alg.decrypt_cmk(decoded_parts[1])
-        cipher.iv = decoded_parts[2]
-        cipher.auth_tag = decoded_parts[4]
-        cipher.auth_data = parts.take(3).join('.')
-        cipher.update(decoded_parts[3]) + cipher.final
+        begin
+          cipher.key = @alg.decrypt_cmk(decoded_parts[1])
+          cipher.iv = decoded_parts[2]
+          cipher.auth_tag = decoded_parts[4]
+          cipher.auth_data = parts.take(3).join('.')
+          cipher.update(decoded_parts[3]) + cipher.final
+        rescue OpenSSL::Cipher::CipherError
+          raise Sandal::TokenError, 'Invalid token.'
+        end
       end
 
     end

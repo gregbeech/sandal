@@ -8,7 +8,9 @@ A Ruby library for creating and reading [JSON Web Tokens (JWT) draft-06](http://
 
 Add this line to your application's Gemfile:
 
-    gem 'sandal'
+```ruby
+gem 'sandal'
+```
 
 And then execute:
 
