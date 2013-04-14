@@ -1,4 +1,5 @@
 require 'helper'
+require 'securerandom'
 
 shared_examples 'algorithm compatibility' do |enc_class|
 
