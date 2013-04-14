@@ -4,7 +4,8 @@ module Sandal
   module Enc
     module Alg
 
-      # The direct ("dir") key encryption mechanism, which uses a pre-shared content master key.
+      # The direct ("dir") key encryption mechanism, which uses a pre-shared 
+      # content master key.
       class Direct
 
         # @return [String] The JWA name of the algorithm.
@@ -21,7 +22,8 @@ module Sandal
           @cmk = cmk
         end
 
-        # Returns an empty string as the content master key is not included in the JWE token.
+        # Returns an empty string as the content master key is not included in 
+        # the JWE token.
         #
         # @param cmk [String] This parameter is ignored.
         # @return [String] An empty string.
@@ -36,7 +38,7 @@ module Sandal
         # @raise [Sandal::TokenError] encrypted_cmk is not nil or empty.
         def decrypt_cmk(encrypted_cmk)
           unless encrypted_cmk.nil? || encrypted_cmk.empty?
-            raise Sandal::TokenError, 'The token should not include an encrypted content master key.' 
+            raise Sandal::TokenError, 'Token must not include encrypted CMK.' 
           end
           @cmk
         end

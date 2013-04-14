@@ -9,11 +9,13 @@ module Sandal
       # @return [String] The JWA name of the algorithm.
       attr_reader :name
 
-      # Creates a new instance; it's probably easier to use one of the subclass constructors.
+      # Creates a new instance; it's probably easier to use one of the subclass
+      # constructors.
       #
       # @param sha_size [Integer] The size of the SHA algorithm.
       # @param prime_size [Integer] The size of the ECDSA primes.
-      # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public).
+      # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or 
+      #   validation (public).
       def initialize(sha_size, prime_size, key)
         @name = "ES#{sha_size}"
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
@@ -87,16 +89,20 @@ module Sandal
         n_to_s.call(r) + n_to_s.call(s)
       end
 
-      protected
+      private
 
-      # Ensures that a key has a specified curve name.
+      # Makes an EC key and ensures that it has the right curve name.
       #
-      # @param key [OpenSSL::PKey::EC] The key.
+      # @param key [OpenSSL::PKey::EC or String] The key.
       # @param curve_name [String] The curve name.
-      # @return [void].
-      # @raise [ArgumentError] The key has a different curve name.
-      def ensure_curve(key, curve_name)
-        raise ArgumentError, "The key must be in the #{curve_name} group." unless key.group.curve_name == curve_name
+      # @return [OpenSSL::PKey::EC] The key.
+      # @raise [ArgumentError] The key has the wrong curve name.
+      def make_key(key, curve_name)
+        key = OpenSSL::PKey::EC.new(key) if key.is_a?(String)
+        unless key.group.curve_name == curve_name
+          raise ArgumentError, "The key must be in the #{curve_name} group."
+        end
+        key
       end
 
     end
@@ -105,11 +111,12 @@ module Sandal
     class ES256 < Sandal::Sig::ES
       # Creates a new instance.
       #
-      # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public). 
+      # @param key [OpenSSL::PKey::EC or String] The key to use for signing 
+      #   (private) or validation (public). If the value is a String then it 
+      #   will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "prime256v1" group.
       def initialize(key)
-        ensure_curve(key, 'prime256v1')
-        super(256, 256, key)
+        super(256, 256, make_key(key, 'prime256v1'))
       end
     end
 
@@ -117,11 +124,12 @@ module Sandal
     class ES384 < Sandal::Sig::ES
       # Creates a new instance.
       #
-      # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public). 
+      # @param key [OpenSSL::PKey::EC or String] The key to use for signing 
+      #   (private) or validation (public). If the value is a String then it 
+      #   will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "secp384r1" group.
       def initialize(key)
-        ensure_curve(key, 'secp384r1')
-        super(384, 384, key)
+        super(384, 384, make_key(key, 'secp384r1'))
       end
     end
 
@@ -129,11 +137,12 @@ module Sandal
     class ES512 < Sandal::Sig::ES
       # Creates a new instance.
       #
-      # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public). 
+      # @param key [OpenSSL::PKey::EC or String] The key to use for signing 
+      #   (private) or validation (public). If the value is a String then it 
+      #   will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "secp521r1" group.
       def initialize(key)
-        ensure_curve(key, 'secp521r1')
-        super(512, 521, key)
+        super(512, 521, make_key(key, 'secp521r1'))
       end
     end
 

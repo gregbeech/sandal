@@ -28,12 +28,15 @@ module Sandal
       #
       # @param signature [String] The signature to verify.
       # @param payload [String] This parameter is ignored.
-      # @return [Boolean] true if the signature is nil or empty; otherwise false.
+      # @return [Boolean] true if the signature is nil/empty; otherwise false.
       def valid?(signature, payload)
         signature.nil? || signature.empty?
       end
 
     end
+
+    # The singleton instance of the Sandal::Sig::None signature method.
+    NONE = Sandal::Sig::None.instance
 
   end
 end

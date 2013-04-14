@@ -41,7 +41,7 @@ describe Sandal::Enc::A128CBC_HS256 do
       rsa = OpenSSL::PKey::RSA.new(2048)
       alg = Sandal::Enc::Alg::RSA1_5.new(rsa)
       encrypter = Sandal::Enc::A128CBC_HS256.new(alg)
-    end }.to raise_error Sandal::TokenError, 'Failed to decrypt the content master key.'
+    end }.to raise_error Sandal::TokenError, 'Cannot decrypt content master key.'
   end
 
   it 'can encrypt and decrypt tokens with the "dir" algorithm' do

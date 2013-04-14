@@ -14,8 +14,12 @@ describe Sandal::Util do
     val.should == src
   end
 
-  it 'raises a token error if base64 strings contain padding' do
-    expect { jwt_base64_decode('eyJpc3MiOiJq=') }.to raise_error Sandal::TokenError
+  it 'raises an argument error if base64 strings contain padding' do
+    expect { jwt_base64_decode('eyJpc3MiOiJq=') }.to raise_error ArgumentError
+  end
+
+  it 'raises an argument error if base64 strings are invalid' do
+    expect { jwt_base64_decode('not valid base64') }.to raise_error ArgumentError
   end
 
   it 'compares nil strings as equal' do

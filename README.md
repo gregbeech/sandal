@@ -30,16 +30,12 @@ All the JWA signature methods are supported:
 Signing example:
 
 ```ruby
-require 'openssl'
-require 'sandal'
-
 claims = { 
   'iss' => 'example.org',
   'sub' => 'user@example.org',
   'exp' => (Time.now + 3600).to_i
 }
-key = OpenSSL::PKey::EC.new(File.read('/path/to/ec_private_key.pem'))
-signer = Sandal::Sig::ES256.new(key)
+signer = Sandal::Sig::ES256.new(File.read('/path/to/ec_private_key.pem'))
 jws_token = Sandal.encode_token(claims, signer, { 
   'kid' => 'my ec key'
 })
@@ -48,13 +44,9 @@ jws_token = Sandal.encode_token(claims, signer, {
 Decoding and validating example:
 
 ```ruby
-require 'openssl'
-require 'sandal'
-
 claims = Sandal.decode_token(jws_token) do |header|
   if header['kid'] == 'my ec key'
-    key = OpenSSL::PKey::EC.new(File.read('/path/to/ec_public_key.pem'))
-    Sandal::Sig::ES256.new(key)
+    Sandal::Sig::ES256.new(File.read('/path/to/ec_public_key.pem'))
   end
 end
 ```
@@ -82,11 +74,7 @@ Some of the JWA key encryption algorithms are supported at the moment; others wi
 Encrypting example (assumes use of the jws_token from the signing examples, as typically JWE tokens will be used to wrap JWS tokens):
 
 ```ruby
-require 'openssl'
-require 'sandal'
-
-key = OpenSSL::PKey::RSA.new(File.Read('/path/to/rsa_public_key.pem'))
-alg = Sandal::Enc::Alg::RSA_OAEP.new(key.public_key)
+alg = Sandal::Enc::Alg::RSA_OAEP.new(File.Read('/path/to/rsa_public_key.pem'))
 encrypter = Sandal::Enc::A128GCM.new(alg)
 jwe_token = Sandal.encrypt_token(jws_token, encrypter, {
   'kid': 'your rsa key',
@@ -97,13 +85,9 @@ jwe_token = Sandal.encrypt_token(jws_token, encrypter, {
 Decrypting example:
 
 ```ruby
-require 'openssl'
-require 'sandal'
-
 jws_token = Sandal.decrypt_token(jwe_token) do |header|
   if header['kid'] == 'your rsa key'
-    key = OpenSSL::PKey::RSA.new(File.Read('/path/to/rsa_private_key.pem'))
-    alg = Sandal::Enc::Alg::RSA_OAEP.new(key)
+    alg = Sandal::Enc::Alg::RSA_OAEP.new(File.Read('/path/to/rsa_private_key.pem'))
     Sandal::Enc::A128GCM.new(alg)
   end
 end

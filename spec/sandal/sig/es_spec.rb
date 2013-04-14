@@ -56,6 +56,30 @@ describe Sandal::Sig::ES256 do
     validator.valid?(signature, data).should == true
   end
 
+  it 'can use string keys to sign data and verify signatures' do
+    private_key = <<KEY_END
+-----BEGIN EC PARAMETERS-----
+BggqhkjOPQMBBw==
+-----END EC PARAMETERS-----
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEII1Ar4w2EVK6wNL84EpVTVY7XXXVmVqyvjZ4EW9kBGhSoAoGCCqGSM49
+AwEHoUQDQgAEVnYRY+AEiU+UNdYzl+KtuWvdAfKBoAmEekv4icfZQCbLew/eXIlv
+32E8+j0bFYwYi3XjxCJXRE3S2iWPEEygcA==
+-----END EC PRIVATE KEY-----
+KEY_END
+    public_key = <<KEY_END
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVnYRY+AEiU+UNdYzl+KtuWvdAfKB
+oAmEekv4icfZQCbLew/eXIlv32E8+j0bFYwYi3XjxCJXRE3S2iWPEEygcA==
+-----END PUBLIC KEY-----
+KEY_END
+    data = 'Hello ES256'
+    signer = Sandal::Sig::ES256.new(private_key)
+    signature = signer.sign(data)
+    validator = Sandal::Sig::ES256.new(public_key)
+    validator.valid?(signature, data).should == true
+  end
+
   it 'can verify the signature in JWS section A3.1' do
     x = make_bn([127, 205, 206, 39, 112, 246, 196, 93, 65, 131, 203, 238, 111, 219, 75, 123, 88, 7, 51, 53, 123, 233, 239, 19, 186, 207, 110, 60, 123, 209, 84, 69])
     y = make_bn([199, 241, 68, 205, 27, 189, 155, 126, 135, 44, 223, 237, 185, 238, 185, 244, 179, 105, 93, 110, 169, 11, 36, 173, 138, 70, 35, 40, 133, 136, 229, 173])
@@ -106,6 +130,32 @@ describe Sandal::Sig::ES384 do
     validator.valid?(signature, data).should == true
   end
 
+  it 'can use string keys to sign data and verify signatures' do
+    private_key = <<KEY_END
+-----BEGIN EC PARAMETERS-----
+BgUrgQQAIg==
+-----END EC PARAMETERS-----
+-----BEGIN EC PRIVATE KEY-----
+MIGkAgEBBDDHWNCqR7V8EQS1aeCWXJ6arxaj31tvfBozSVDhbgzvFsFM9tbgbhTb
+1PGWXJEP91SgBwYFK4EEACKhZANiAASSjX9LH/BrmGp6WoHN/gBYN3Su/nIAApwM
+iuFPbUFcWamxo8hUUTxLpdwvrrEHIVV2urXaVc0KHdSo93bVEHMOvLYjpXFXu+8f
+6Fu17ofcECDNIaI9A+uydWY3E/cJUDM=
+-----END EC PRIVATE KEY-----
+KEY_END
+    public_key = <<KEY_END
+-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEko1/Sx/wa5hqelqBzf4AWDd0rv5yAAKc
+DIrhT21BXFmpsaPIVFE8S6XcL66xByFVdrq12lXNCh3UqPd21RBzDry2I6VxV7vv
+H+hbte6H3BAgzSGiPQPrsnVmNxP3CVAz
+-----END PUBLIC KEY-----
+KEY_END
+    data = 'Hello ES384'
+    signer = Sandal::Sig::ES384.new(private_key)
+    signature = signer.sign(data)
+    validator = Sandal::Sig::ES384.new(public_key)
+    validator.valid?(signature, data).should == true
+  end
+
   it 'raises an argument error if the key has the wrong curve' do
     group = OpenSSL::PKey::EC::Group.new('secp521r1') 
     private_key = OpenSSL::PKey::EC.new(group).generate_key
@@ -124,6 +174,34 @@ describe Sandal::Sig::ES512 do
     signature = signer.sign(data)
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = private_key.public_key
+    validator = Sandal::Sig::ES512.new(public_key)
+    validator.valid?(signature, data).should == true
+  end
+
+  it 'can use string keys to sign data and verify signatures' do
+    private_key = <<KEY_END
+-----BEGIN EC PARAMETERS-----
+BgUrgQQAIw==
+-----END EC PARAMETERS-----
+-----BEGIN EC PRIVATE KEY-----
+MIHcAgEBBEIBQokOnEjac/cnqtuEPrS+ekzObqwN4wcsh4MgW1M9D/lC+cfHcgso
+QhdmC1fZEYV9G3eiVYRO818XBrgzX8sOqQGgBwYFK4EEACOhgYkDgYYABADWDbxx
+FZHDy5nzP+tL1AcDgbVtZbin6jOz3E0EPzjDJS8267XROdSLxh/FdM54HaZ5ak2D
+q0VThSOquJdkiy6jyAEOlXLeznDrV9ZP9ddFFFA8OMM2aImU+HdGq6rlWrAs7qMU
+tu6lP9k3+WHD7Z1+YkCafox+lpraE4NrnlkVqO2RVg==
+-----END EC PRIVATE KEY-----
+KEY_END
+    public_key = <<KEY_END
+-----BEGIN PUBLIC KEY-----
+MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQA1g28cRWRw8uZ8z/rS9QHA4G1bWW4
+p+ozs9xNBD84wyUvNuu10TnUi8YfxXTOeB2meWpNg6tFU4UjqriXZIsuo8gBDpVy
+3s5w61fWT/XXRRRQPDjDNmiJlPh3Rquq5VqwLO6jFLbupT/ZN/lhw+2dfmJAmn6M
+fpaa2hODa55ZFajtkVY=
+-----END PUBLIC KEY-----
+KEY_END
+    data = 'Hello ES512'
+    signer = Sandal::Sig::ES512.new(private_key)
+    signature = signer.sign(data)
     validator = Sandal::Sig::ES512.new(public_key)
     validator.valid?(signature, data).should == true
   end

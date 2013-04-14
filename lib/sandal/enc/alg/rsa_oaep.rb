@@ -12,7 +12,8 @@ module Sandal
 
         # Creates a new instance.
         #
-        # @param key [OpenSSL::PKey::RSA] The RSA public key used to protect the content master key.
+        # @param key [OpenSSL::PKey::RSA] The RSA public key used to protect the
+        # content master key.
         def initialize(key)
           @name = 'RSA-OAEP'
           @key = key
@@ -31,11 +32,11 @@ module Sandal
         #
         # @param encrypted_cmk [String] The encrypted content master key.
         # @return [String] The pre-shared content master key.
-        # @raise [Sandal::TokenError] The content master key cannot be decrypted.
+        # @raise [Sandal::TokenError] The content master key can't be decrypted.
         def decrypt_cmk(encrypted_cmk)
           @key.private_decrypt(encrypted_cmk, @padding)
         rescue
-          raise Sandal::TokenError, 'Failed to decrypt the content master key.'
+          raise Sandal::TokenError, 'Cannot decrypt content master key.'
         end
 
       end

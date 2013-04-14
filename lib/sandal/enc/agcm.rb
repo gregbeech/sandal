@@ -23,10 +23,10 @@ module Sandal
 
       def encrypt(header, payload)
         cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
-        content_master_key = @alg.respond_to?(:cmk) ? @alg.cmk : cipher.random_key
-        encrypted_key = @alg.encrypt_cmk(content_master_key)
+        cmk = @alg.respond_to?(:cmk) ? @alg.cmk : cipher.random_key
+        encrypted_key = @alg.encrypt_cmk(cmk)
 
-        cipher.key = content_master_key
+        cipher.key = cmk
         iv = cipher.random_iv
 
         auth_parts = [MultiJson.dump(header), encrypted_key, iv]
@@ -34,8 +34,9 @@ module Sandal
         cipher.auth_data  = auth_data
 
         ciphertext = cipher.update(payload) + cipher.final
-        remainder = [ciphertext, cipher.auth_tag].map { |part| jwt_base64_encode(part) }.join('.')
-        [auth_data, remainder].join('.')
+        remaining_parts = [ciphertext, cipher.auth_tag]
+        remaining_parts.map! { |part| jwt_base64_encode(part) }
+        [auth_data, *remaining_parts].join('.')
       end
 
       def decrypt(parts, decoded_parts)

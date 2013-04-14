@@ -10,7 +10,8 @@ module Sandal
       # @return [String] The JWA name of the algorithm.
       attr_reader :name
 
-      # Creates a new instance; it's probably easier to use one of the subclass constructors.
+      # Creates a new instance; it's probably easier to use one of the subclass
+      # constructors.
       #
       # @param sha_size [Integer] The size of the SHA algorithm.
       # @param key [String] The key to use for signing or validation.

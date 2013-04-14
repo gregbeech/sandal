@@ -1,4 +1,16 @@
-## 0.2.0
+## 0.2.1
+
+Features:
+
+- Keys can now be passed as strings as well as OpenSSL types.
+
+Bug fixes:
+
+- Strings are now compared by codepoint rather than by byte, in accordance with JWS § 5.3.
+- Integrity value check in AES/CBC+HS algorithms now uses the constant time string comparison function rather than ==.
+- Base64 decoding now checks that the decode was not lossy, as jruby would do a 'best effort' decode of invalid base64 strings.
+
+## 0.2.0 (05 April 2013)
 
 Features:
 
