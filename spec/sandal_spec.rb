@@ -45,14 +45,20 @@ describe Sandal do
     expect { Sandal.decode_token(token) }.to raise_error Sandal::ClaimError
   end
 
-  it 'does not raise an error when the expiry date is far in the past but validation is disabled' do
+  it 'does not raise an error when the expiry date is in the past but validation is disabled' do
     token = Sandal.encode_token({ 'exp' => (Time.now - 600).to_i }, nil)
-    Sandal.decode_token(token) { |header, options| options[:validate_exp] = false }
+    Sandal.decode_token(token) do |header, options| 
+      options[:ignore_exp] = true
+      nil
+    end
   end
 
   it 'does not raise an error when the expiry date is in the past but within the clock skew' do
     token = Sandal.encode_token({ 'exp' => (Time.now - 60).to_i }, nil)
-    Sandal.decode_token(token)
+    Sandal.decode_token(token) do |header, options|
+      options[:max_clock_skew] = 300
+      nil
+    end
   end
 
   it 'does not raise an error when the expiry date is valid' do
@@ -70,14 +76,20 @@ describe Sandal do
     expect { Sandal.decode_token(token) }.to raise_error Sandal::ClaimError
   end
 
-  it 'does not raise an error when the not-before date is far in the future but validation is disabled' do
+  it 'does not raise an error when the not-before date is in the future but validation is disabled' do
     token = Sandal.encode_token({ 'nbf' => (Time.now + 600).to_i }, nil)
-    Sandal.decode_token(token) { |header, options| options[:validate_nbf] = false }
+    Sandal.decode_token(token) do |header, options| 
+      options[:ignore_nbf] = true
+      nil
+    end
   end
 
   it 'does not raise an error when the not-before date is in the future but within the clock skew' do
     token = Sandal.encode_token({ 'nbf' => (Time.now + 60).to_i }, nil)
-    Sandal.decode_token(token)
+    Sandal.decode_token(token) do |header, options|
+      options[:max_clock_skew] = 300
+      nil
+    end
   end
 
   it 'does not raise an error when the not-before is valid' do

@@ -107,7 +107,7 @@ Sandal.default! valid_iss: ['example.org'], max_clock_skew: 60
 Sometimes while developing it can be useful to turn off some validation options just to get things working (don't do this in production!):
 
 ```ruby
-Sandal.default! validate_signature: false, validate_exp: false
+Sandal.default! ignore_signature: true, ignore_exp: true
 ```
 
 These options can also be configured on a per-token basis by using a second `options` parameter in the block passed to the `decode` method.

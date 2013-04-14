@@ -23,20 +23,32 @@ module Sandal
 
   # The default options for token handling.
   #
-  # max_clock_skew:: The maximum clock skew, in seconds, when validating times.
-  # valid_iss:: A list of valid token issuers, if issuer validation is required.
-  # valid_aud:: A list of valid audiences, if audience validation is required.
-  # validate_exp:: Whether the expiry date of the token is validated.
-  # validate_nbf:: Whether the not-before date of the token is validated.
-  # validate_signature:: Whether the signature of signed (JWS) tokens is 
-  #   validated.
+  # ignore_exp:: 
+  #   Whether to ignore the expiry date of the token. This setting is just to
+  #   help get things working and should always be false in real apps!
+  # ignore_nbf:: 
+  #   Whether to ignore the not-before date of the token. This setting is just 
+  #   to help get things working and should always be false in real apps!
+  # ignore_signature:: 
+  #   Whether to ignore the signature of signed (JWS) tokens.  This setting is 
+  #   just tohelp get things working and should always be false in real apps!
+  # max_clock_skew:: 
+  #   The maximum clock skew, in seconds, when validating times. If your server
+  #   time is out of sync with the token server then this can be increased to
+  #   take that into account. It probably shouldn't be more than about 300.
+  # valid_iss:: 
+  #   A list of valid token issuers, if validation of the issuer claim is 
+  #   required.
+  # valid_aud:: 
+  #   A list of valid audiences, if validation of the audience claim is
+  #   required.
   DEFAULT_OPTIONS = {
-    max_clock_skew: 300,
+    ignore_exp: false,
+    ignore_nbf: false,
+    ignore_signature: false,
+    max_clock_skew: 0,
     valid_iss: [],
     valid_aud: [],
-    validate_exp: true,
-    validate_nbf: true,
-    validate_signature: true
   }
 
   # Overrides the default options.
@@ -48,9 +60,9 @@ module Sandal
     DEFAULT_OPTIONS.merge!(defaults)
   end
 
-  # Creates a signed JSON Web Token (JWS).
+  # Creates a signed JSON Web Token.
   #
-  # @param payload [String/Hash] The payload of the token. Hashes will be 
+  # @param payload [String or Hash] The payload of the token. Hashes will be 
   #   encoded as JSON.
   # @param signer [#name,#sign] The token signer, which may be nil for an 
   #   unsigned token.
@@ -58,7 +70,7 @@ module Sandal
   #   include 'alg').
   # @return [String] A signed JSON Web Token.
   def self.encode_token(payload, signer, header_fields = nil)
-    signer ||= Sandal::Sig::None.instance
+    signer ||= Sandal::Sig::NONE
 
     header = {}
     header['alg'] = signer.name if signer.name != Sandal::Sig::NONE.name
@@ -72,10 +84,10 @@ module Sandal
     [sec_input, jwt_base64_encode(signature)].join('.')
   end
 
-  # Decodes and validates a signed JSON Web Token (JWS).
+  # Decodes and validates a signed JSON Web Token.
   #
   # The block is called with the token header as the first parameter, and should
-  # return the appropriate {Sandal::Sig} to validate the signature. It can
+  # return the appropriate signature method to validate the signature. It can
   # optionally have a second options parameter which can be used to override the
   # {DEFAULT_OPTIONS} on a per-token basis.
   #
@@ -84,8 +96,9 @@ module Sandal
   # @yieldparam options [Hash] (Optional) A hash that can be used to override 
   #   the default options.
   # @yieldreturn [#valid?] The signature validator.
-  # @return [Hash/String] The payload of the token as a Hash if it was JSON, 
+  # @return [Hash or String] The payload of the token as a Hash if it was JSON, 
   #   otherwise as a String.
+  # @raise [Sandal::ClaimError] One or more claims in the token is invalid.
   # @raise [Sandal::TokenError] The token format is invalid, or validation of 
   #   the token failed.
   def self.decode_token(token)
@@ -94,9 +107,9 @@ module Sandal
 
     options = DEFAULT_OPTIONS.clone
     validator = yield header, options if block_given?
-    validator ||= Sandal::Sig::None.instance
+    validator ||= Sandal::Sig::NONE
 
-    if options[:validate_signature]
+    unless options[:ignore_signature]
       secured_input = parts.take(2).join('.')
       unless validator.valid?(signature, secured_input)
         raise TokenError, 'Invalid signature.'
@@ -106,10 +119,10 @@ module Sandal
     parse_and_validate(payload, header['cty'], options)
   end
 
-  # Creates an encrypted JSON Web Token (JWE).
+  # Creates an encrypted JSON Web Token.
   #
   # @param payload [String] The payload of the token.
-  # @param encrypter [Sandal::Enc] The token encrypter.
+  # @param encrypter [#name,#alg,#encrypt] The token encrypter.
   # @param header_fields [Hash] Header fields for the token (note: do not
   #   include 'alg' or 'enc').
   # @return [String] An encrypted JSON Web Token.
@@ -122,15 +135,21 @@ module Sandal
     encrypter.encrypt(header, payload)
   end
 
-  # Decrypts and validates an encrypted JSON Web Token (JWE).
+  # Decrypts and validates an encrypted JSON Web Token.
+  #
+  # The block is called with the token header as the first parameter, and should
+  # return the appropriate encryption method to decrypt the token. It can
+  # optionally have a second options parameter which can be used to override the
+  # {DEFAULT_OPTIONS} on a per-token basis.
   #
   # @param token [String] The encrypted JSON Web Token.
   # @yieldparam header [Hash] The JWT header values.
   # @yieldparam options [Hash] (Optional) A hash that can be used to override
   #   the default options.
   # @yieldreturn [#decrypt] The token decrypter.
-  # @return [Hash/String] The payload of the token as a Hash if it was JSON,
+  # @return [Hash or String] The payload of the token as a Hash if it was JSON,
   #   otherwise as a String.
+  # @raise [Sandal::ClaimError] One or more claims in the token is invalid.
   # @raise [Sandal::TokenError] The token format is invalid, or decryption or
   #   validation of the token failed.
   def self.decrypt_token(token)
