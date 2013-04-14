@@ -6,6 +6,7 @@ module Sandal
 
     # Base implementation of the AES/GCM family of encryption algorithms.
     class AGCM
+      extend Sandal::Util
 
       # The JWA name of the encryption.
       attr_reader :name
@@ -29,11 +30,11 @@ module Sandal
         iv = cipher.random_iv
 
         auth_parts = [MultiJson.dump(header), encrypted_key, iv]
-        auth_data = auth_parts.map { |part| Sandal::Util.base64_encode(part) }.join('.')
+        auth_data = auth_parts.map { |part| jwt_base64_encode(part) }.join('.')
         cipher.auth_data  = auth_data
 
         ciphertext = cipher.update(payload) + cipher.final
-        remainder = [ciphertext, cipher.auth_tag].map { |part| Sandal::Util.base64_encode(part) }.join('.')
+        remainder = [ciphertext, cipher.auth_tag].map { |part| jwt_base64_encode(part) }.join('.')
         [auth_data, remainder].join('.')
       end
 

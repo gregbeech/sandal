@@ -82,6 +82,9 @@ Some of the JWA key encryption algorithms are supported at the moment; others wi
 Encrypting example (assumes use of the jws_token from the signing examples, as typically JWE tokens will be used to wrap JWS tokens):
 
 ```ruby
+require 'openssl'
+require 'sandal'
+
 key = OpenSSL::PKey::RSA.new(File.Read('/path/to/rsa_public_key.pem'))
 alg = Sandal::Enc::Alg::RSA_OAEP.new(key.public_key)
 encrypter = Sandal::Enc::A128GCM.new(alg)

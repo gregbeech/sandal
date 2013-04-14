@@ -7,8 +7,12 @@ require 'sandal/sig'
 require 'sandal/util'
 
 
-# A library for creating and reading JSON Web Tokens (JWT).
+# A library for creating and reading JSON Web Tokens (JWT), supporting JSON Web Signatures (JWS)
+# and JSON Web Encryption (JWE).
+#
+# Currently supports draft-06 of the JWT spec, and draft-08 of the JWS and JWE specs.
 module Sandal
+  extend Sandal::Util
 
   # The error that is raised when a token is invalid.
   class TokenError < StandardError; end
@@ -57,9 +61,9 @@ module Sandal
 
     payload = MultiJson.dump(payload) unless payload.is_a?(String)
 
-    secured_input = [header, payload].map { |part| Sandal::Util.base64_encode(part) }.join('.')
+    secured_input = [header, payload].map { |part| jwt_base64_encode(part) }.join('.')
     signature = signer.sign(secured_input)
-    [secured_input, Sandal::Util.base64_encode(signature)].join('.')
+    [secured_input, jwt_base64_encode(signature)].join('.')
   end
 
   # Decodes and validates a signed JSON Web Token (JWS).
@@ -144,7 +148,7 @@ private
 
   # Decodes the parts of a token.
   def self.decode_token_parts(parts)
-    parts = parts.map { |part| Sandal::Util.base64_decode(part) }
+    parts = parts.map { |part| jwt_base64_decode(part) }
     parts[0] = MultiJson.load(parts[0])
     parts
   rescue

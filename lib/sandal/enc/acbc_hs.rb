@@ -6,6 +6,7 @@ module Sandal
 
     # Base implementation of the AES/CBC+HMAC-SHA family of encryption algorithms.
     class ACBC_HS
+      extend Sandal::Util
 
       # The JWA name of the encryption.
       attr_reader :name
@@ -17,7 +18,7 @@ module Sandal
       #
       # @param aes_size [Integer] The size of the AES algorithm.
       # @param sha_size [Integer] The size of the SHA algorithm.
-      # @param key [#name, #encrypt_cmk, #decrypt_cmk] The algorithm to use to encrypt and/or decrypt the AES key.
+      # @param alg [#name, #encrypt_cmk, #decrypt_cmk] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(aes_size, sha_size, alg)
         @aes_size = aes_size
         @sha_size = sha_size
@@ -37,11 +38,11 @@ module Sandal
         ciphertext = cipher.update(payload) + cipher.final
 
         secured_parts = [MultiJson.dump(header), encrypted_key, iv, ciphertext]
-        secured_input = secured_parts.map { |part| Sandal::Util.base64_encode(part) }.join('.')
+        secured_input = secured_parts.map { |part| jwt_base64_encode(part) }.join('.')
         content_integrity_key = derive_integrity_key(content_master_key)
         integrity_value = compute_integrity_value(content_integrity_key, secured_input)
 
-        secured_input << '.' << Sandal::Util.base64_encode(integrity_value)
+        secured_input << '.' << jwt_base64_encode(integrity_value)
       end
 
       def decrypt(parts, decoded_parts)
@@ -49,7 +50,7 @@ module Sandal
         
         content_integrity_key = derive_integrity_key(content_master_key)
         computed_integrity_value = compute_integrity_value(content_integrity_key, parts.take(4).join('.'))
-        raise Sandal::TokenError, 'Invalid integrity value.' unless decoded_parts[4] == computed_integrity_value
+        raise Sandal::TokenError, 'Invalid integrity value.' unless jwt_strings_equal?(decoded_parts[4], computed_integrity_value)
 
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
         cipher.key = derive_encryption_key(content_master_key)
