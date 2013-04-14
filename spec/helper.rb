@@ -4,6 +4,7 @@ Coveralls.wear!
 require 'rspec'
 RSpec.configure do |c|
   c.treat_symbols_as_metadata_keys_with_true_values = true
+  c.filter_run_excluding :timing_dependent # these are unreliable so don't run unless specified explicitly
   c.filter_run_excluding :jruby_incompatible if RUBY_PLATFORM == 'java'
 end
 

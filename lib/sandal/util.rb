@@ -12,9 +12,7 @@ module Sandal
     # the equality check to help protect against timing attacks.
     #--
     # See http://rdist.root.org/2009/05/28/timing-attack-in-google-keyczar-library/ for more info
-    # about timing attacks. Note also that this code could be prettier (e.g. use zip/reduce to
-    # compute the result) but benchmarking shows this is quite a bit quicker - though still several
-    # orders of magnitude slower than the built-in string equality function.
+    # about timing attacks.
     #++
     #
     # @param a [String] The first string.
@@ -22,16 +20,8 @@ module Sandal
     # @return [Boolean] true if the strings are equal; otherwise false.
     def jwt_strings_equal?(a, b)
       return true if a.object_id == b.object_id
-      return false if a.nil? || b.nil?
-
-      acp, bcp = a.codepoints, b.codepoints
-      return false unless acp.length == bcp.length
-      
-      result = 0
-      acp.each_with_index do |a, index|
-        result |= a ^ bcp[index]
-      end
-      result == 0
+      return false if a.nil? || b.nil? || a.length != b.length
+      a.codepoints.zip(b.codepoints).reduce(0) { |memo, (a, b)| memo |= a ^ b } == 0
     end
 
     # Base64 encodes a string, in compliance with the JWT specification.

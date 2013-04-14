@@ -37,7 +37,7 @@ describe Sandal::Util do
     jwt_strings_equal?('a longer string', 'a different longer string').should == false
   end
 
-  it 'compares strings without short-circuiting' do
+  it 'compares strings without short-circuiting', :timing_dependent do
     measure_equals = -> a, b do
       Benchmark.realtime { 100.times { jwt_strings_equal?(a, b) } } 
     end
