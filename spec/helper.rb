@@ -1,7 +1,18 @@
 require 'coveralls'
-Coveralls.wear!
+require 'simplecov'
+
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter]
+SimpleCov.start do
+  add_filter 'spec/'
+  add_group 'Encryption', 'sandal/enc'
+  add_group 'Signatures', 'sandal/sig'
+end
+
 
 require 'rspec'
+
 RSpec.configure do |c|
   c.treat_symbols_as_metadata_keys_with_true_values = true
   c.filter_run_excluding :timing_dependent # these are unreliable so don't run unless specified explicitly
