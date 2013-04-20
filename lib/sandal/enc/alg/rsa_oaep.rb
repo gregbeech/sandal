@@ -12,11 +12,13 @@ module Sandal
 
         # Creates a new instance.
         #
-        # @param key [OpenSSL::PKey::RSA] The RSA public key used to protect the
-        # content master key.
+        # @param key [OpenSSL::PKey::RSA or String] The key to use for CMK 
+        # encryption (public) or decryption (private). If the value is a String 
+        # then it will be passed to the constructor of the RSA class. This must 
+        # be at least 2048 bits to be compliant with the JWA specification.
         def initialize(key)
           @name = 'RSA-OAEP'
-          @key = key
+          @key = key.is_a?(String) ? OpenSSL::PKey::RSA.new(key) : key
           @padding = OpenSSL::PKey::RSA::PKCS1_OAEP_PADDING
         end
 

@@ -1,8 +1,12 @@
-## 0.2.1
+## 0.3.0 (20 April 2013)
 
 Features:
 
 - Keys can now be passed as strings as well as OpenSSL types.
+
+Breaking changes:
+
+- Default options have changed so that the behaviour is consistent with no options being passed.
 
 Bug fixes:
 
