@@ -76,25 +76,12 @@ module Sandal
 
       # Derives the content encryption key from the content master key.
       def derive_encryption_key(cmk)
-        derive_content_key('Encryption', cmk, @aes_size)
+        Sandal::Enc.concat_kdf(@digest, cmk, @aes_size, @name, 0, 0, 'Encryption')
       end
 
       # Derives the content integrity key from the content master key.
       def derive_integrity_key(cmk)
-        derive_content_key('Integrity', cmk, @sha_size)
-      end
-
-      # Derives content keys using the Concat KDF.
-      def derive_content_key(label, cmk, size)
-        hash_input = [1].pack('N')
-        hash_input << cmk
-        hash_input << [size].pack('N')
-        hash_input << @name.encode('utf-8')
-        hash_input << [0].pack('N')
-        hash_input << [0].pack('N')
-        hash_input << label.encode('us-ascii')
-        hash = @digest.digest(hash_input)
-        hash[0..((size / 8) - 1)]
+        Sandal::Enc.concat_kdf(@digest, cmk, @sha_size, @name, 0, 0, 'Integrity')
       end
 
     end
