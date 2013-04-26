@@ -83,7 +83,7 @@ jwe_token = Sandal.encrypt_token(jws_token, encrypter, {
 Decrypting example:
 
 ```ruby
-jws_token = Sandal.decrypt_token(jwe_token) do |header|
+jws_token = Sandal.decode_token(jwe_token) do |header|
   if header['kid'] == 'your rsa key'
     alg = Sandal::Enc::Alg::RSA_OAEP.new(File.Read('/path/to/rsa_private_key.pem'))
     Sandal::Enc::A128GCM.new(alg)

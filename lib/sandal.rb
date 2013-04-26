@@ -60,6 +60,30 @@ module Sandal
     DEFAULT_OPTIONS.merge!(defaults)
   end
 
+  # Checks whether a token is encrypted.
+  #
+  # @param token [String or Array] The token, or token parts.
+  # @return [Boolean] true if the token is encrypted; otherwise false.
+  def self.is_encrypted?(token)
+    if token.is_a?(String)
+      token.count('.') == 4
+    else
+      token.count == 5
+    end
+  end
+
+  # Checks whether a token is signed.
+  #
+  # @param token [String or Array] The token, or token parts.
+  # @return [Boolean] true if the token is signed; otherwise false.
+  def self.is_signed?(token)
+    if token.is_a?(String)
+      !token.end_with?('.') && token.count('.') == 2
+    else
+      token.count == 3 && !token[2].nil? && !token[2].empty?
+    end
+  end
+
   # Creates a signed JSON Web Token.
   #
   # @param payload [String or Hash] The payload of the token. Hashes will be 
@@ -84,41 +108,6 @@ module Sandal
     [sec_input, jwt_base64_encode(signature)].join('.')
   end
 
-  # Decodes and validates a signed JSON Web Token.
-  #
-  # The block is called with the token header as the first parameter, and should
-  # return the appropriate signature method to validate the signature. It can
-  # optionally have a second options parameter which can be used to override the
-  # {DEFAULT_OPTIONS} on a per-token basis.
-  #
-  # @param token [String] The encoded JSON Web Token.
-  # @yieldparam header [Hash] The JWT header values.
-  # @yieldparam options [Hash] (Optional) A hash that can be used to override 
-  #   the default options.
-  # @yieldreturn [#valid?] The signature validator.
-  # @return [Hash or String] The payload of the token as a Hash if it was JSON, 
-  #   otherwise as a String.
-  # @raise [Sandal::ClaimError] One or more claims in the token is invalid.
-  # @raise [Sandal::TokenError] The token format is invalid, or validation of 
-  #   the token failed.
-  def self.decode_token(token)
-    parts = token.split('.')
-    header, payload, signature = decode_jws_token_parts(parts)
-
-    options = DEFAULT_OPTIONS.clone
-    validator = yield header, options if block_given?
-    validator ||= Sandal::Sig::NONE
-
-    unless options[:ignore_signature]
-      secured_input = parts.take(2).join('.')
-      unless validator.valid?(signature, secured_input)
-        raise TokenError, 'Invalid signature.'
-      end
-    end
-
-    parse_and_validate(payload, header['cty'], options)
-  end
-
   # Creates an encrypted JSON Web Token.
   #
   # @param payload [String] The payload of the token.
@@ -135,50 +124,67 @@ module Sandal
     encrypter.encrypt(header, payload)
   end
 
-  # Decrypts and validates an encrypted JSON Web Token.
+  # Decodes and validates a signed and/or encrypted JSON Web Token, recursing
+  # into any nested tokens, and returns the payload.
   #
   # The block is called with the token header as the first parameter, and should
-  # return the appropriate encryption method to decrypt the token. It can
+  # return the appropriate signature method to validate the signature. It can
   # optionally have a second options parameter which can be used to override the
   # {DEFAULT_OPTIONS} on a per-token basis.
   #
-  # @param token [String] The encrypted JSON Web Token.
+  # @param token [String] The encoded JSON Web Token.
+  # @param depth [Integer] The maximum depth of token nesting to decode to.
   # @yieldparam header [Hash] The JWT header values.
-  # @yieldparam options [Hash] (Optional) A hash that can be used to override
+  # @yieldparam options [Hash] (Optional) A hash that can be used to override 
   #   the default options.
-  # @yieldreturn [#decrypt] The token decrypter.
-  # @return [Hash or String] The payload of the token as a Hash if it was JSON,
+  # @yieldreturn [#valid? or #decrypt] The signature validator if the token is
+  #   signed, or the token decrypter if the token is encrypted.
+  # @return [Hash or String] The payload of the token as a Hash if it was JSON, 
   #   otherwise as a String.
   # @raise [Sandal::ClaimError] One or more claims in the token is invalid.
-  # @raise [Sandal::TokenError] The token format is invalid, or decryption or
-  #   validation of the token failed.
-  def self.decrypt_token(token)
+  # @raise [Sandal::TokenError] The token format is invalid, or validation of 
+  #   the token failed.
+  def self.decode_token(token, depth = 16)
     parts = token.split('.')
-    decoded_parts = decode_jwe_token_parts(parts)
+    decoded_parts = decode_token_parts(parts)
     header = decoded_parts[0]
 
     options = DEFAULT_OPTIONS.clone
-    decrypter = yield header, options if block_given?
+    decoder = yield header, options if block_given?
 
-    payload = decrypter.decrypt(parts, decoded_parts)
-    parse_and_validate(payload, header['cty'], options)
+    if is_encrypted?(parts)
+      payload = decoder.decrypt(parts, decoded_parts)
+    else
+      payload = decoded_parts[1]
+      unless options[:ignore_signature]
+        validate_signature(parts, decoded_parts[2], decoder) 
+      end
+    end
+
+    if header['cty'] == 'JWT'
+      if depth > 0
+        if block_given?
+          decode_token(payload, depth - 1, &Proc.new)
+        else 
+          decode_token(payload, depth - 1)
+        end
+      else
+        payload
+      end
+    else
+      parse_and_validate(payload, options)
+    end
   end
 
 private
 
-  # Decodes the parts of a JWS token.
-  def self.decode_jws_token_parts(parts)
-    parts = decode_token_parts(parts)
-    parts << '' if parts.length == 2
-    raise TokenError, 'Invalid token format.' unless parts.length == 3
-    parts
-  end
-
-  # Decodes the parts of a JWE token.
-  def self.decode_jwe_token_parts(parts)
-    parts = decode_token_parts(parts)
-    raise TokenError, 'Invalid token format.' unless parts.length == 5
-    parts
+  # Decodes and validates a signed JSON Web Token.
+  def self.validate_signature(parts, signature, validator)
+    validator ||= Sandal::Sig::NONE
+    secured_input = parts.take(2).join('.')
+    unless validator.valid?(signature, secured_input)
+      raise TokenError, 'Invalid signature.'
+    end
   end
 
   # Decodes the parts of a token.
@@ -191,9 +197,7 @@ private
   end
 
   # Parses the content of a token and validates the claims if is JSON claims.
-  def self.parse_and_validate(payload, content_type, options)
-    return payload if content_type == 'JWT'
-
+  def self.parse_and_validate(payload, options)
     claims = MultiJson.load(payload) rescue nil
     if claims
       claims.extend(Sandal::Claims).validate_claims(options)

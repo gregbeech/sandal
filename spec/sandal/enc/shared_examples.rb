@@ -8,7 +8,7 @@ shared_examples 'algorithm compatibility' do |enc_class|
     content_master_key = SecureRandom.random_bytes(32)
     encrypter = enc_class.new(Sandal::Enc::Alg::Direct.new(content_master_key))
     token = Sandal.encrypt_token(payload, encrypter)
-    output = Sandal.decrypt_token(token) { encrypter }
+    output = Sandal.decode_token(token) { encrypter }
     output.should == payload
   end
 
@@ -17,7 +17,7 @@ shared_examples 'algorithm compatibility' do |enc_class|
     rsa = OpenSSL::PKey::RSA.new(2048)
     encrypter = enc_class.new(Sandal::Enc::Alg::RSA1_5.new(rsa.public_key))
     token = Sandal.encrypt_token(payload, encrypter)
-    output = Sandal.decrypt_token(token) do 
+    output = Sandal.decode_token(token) do 
       enc_class.new(Sandal::Enc::Alg::RSA1_5.new(rsa))
     end
     output.should == payload
@@ -28,7 +28,7 @@ shared_examples 'algorithm compatibility' do |enc_class|
     rsa = OpenSSL::PKey::RSA.new(2048)
     encrypter = enc_class.new(Sandal::Enc::Alg::RSA_OAEP.new(rsa.public_key))
     token = Sandal.encrypt_token(payload, encrypter)
-    output = Sandal.decrypt_token(token) do 
+    output = Sandal.decode_token(token) do 
       enc_class.new(Sandal::Enc::Alg::RSA_OAEP.new(rsa))
     end
     output.should == payload

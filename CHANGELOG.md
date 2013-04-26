@@ -1,3 +1,13 @@
+## 0.4.0
+
+Features:
+
+- The decode_token method now recursively decodes/decrypts nested tokens.
+
+Breaking changes:
+
+- The decode_token method is now used for both signed and encrypted tokens; the decrypt_token method has been removed.
+
 ## 0.3.0 (20 April 2013)
 
 Features:

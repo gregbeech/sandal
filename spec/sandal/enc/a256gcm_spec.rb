@@ -21,7 +21,7 @@ describe Sandal::Enc::A256GCM do
 
     it 'can decrypt the example token' do
       token = 'eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ.M2XxpbORKezKSzzQL_95-GjiudRBTqn_omS8z9xgoRb7L0Jw5UsEbxmtyHn2T71mrZLkjg4Mp8gbhYoltPkEOHvAopz25-vZ8C2e1cOaAo5WPcbSIuFcB4DjBOM3t0UAO6JHkWLuAEYoe58lcxIQneyKdaYSLbV9cKqoUoFQpvKWYRHZbfszIyfsa18rmgTjzrtLDTPnc09DSJE24aQ8w3i8RXEDthW9T1J6LsTH_vwHdwUgkI-tC2PNeGrnM-dNSfzF3Y7-lwcGy0FsdXkPXytvDV7y4pZeeUiQ-0VdibIN2AjjfW60nfrPuOjepMFG6BBBbR37pHcyzext9epOAQ.48V1_ALb6US04U3b._e21tGGhac_peEFkLXr2dMPUZiUkrw.7V5ZDko0v_mf2PAc4JMiUg'
-      payload = Sandal.decrypt_token(token) do |header|
+      payload = Sandal.decode_token(token) do |header|
         alg = Sandal::Enc::Alg::RSA_OAEP.new(@rsa)
         Sandal::Enc::A256GCM.new(alg)
       end
@@ -30,7 +30,7 @@ describe Sandal::Enc::A256GCM do
 
     it 'raises a token error when the integrity value is changed' do
       token = 'eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ.M2XxpbORKezKSzzQL_95-GjiudRBTqn_omS8z9xgoRb7L0Jw5UsEbxmtyHn2T71mrZLkjg4Mp8gbhYoltPkEOHvAopz25-vZ8C2e1cOaAo5WPcbSIuFcB4DjBOM3t0UAO6JHkWLuAEYoe58lcxIQneyKdaYSLbV9cKqoUoFQpvKWYRHZbfszIyfsa18rmgTjzrtLDTPnc09DSJE24aQ8w3i8RXEDthW9T1J6LsTH_vwHdwUgkI-tC2PNeGrnM-dNSfzF3Y7-lwcGy0FsdXkPXytvDV7y4pZeeUiQ-0VdibIN2AjjfW60nfrPuOjepMFG6BBBbR37pHcyzext9epOAQ.48V1_ALb6US04U3b._e21tGGhac_peEFkLXr2dMPUZiUkrw.8LXqMd0JLGsxMaB5uoNaMpg7uUW_p40RlaZHCwMIyzk'
-      expect { Sandal.decrypt_token(token) do |header|
+      expect { Sandal.decode_token(token) do |header|
         alg = Sandal::Enc::Alg::RSA_OAEP.new(@rsa)
         Sandal::Enc::A256GCM.new(alg)
       end }.to raise_error Sandal::TokenError, 'Invalid token.'
@@ -40,7 +40,7 @@ describe Sandal::Enc::A256GCM do
 
   it 'raises a token error when the RSA keys JWE section A.1 are changed' do
     token = 'eyJhbGciOiJSU0EtT0FFUCIsImVuYyI6IkEyNTZHQ00ifQ.M2XxpbORKezKSzzQL_95-GjiudRBTqn_omS8z9xgoRb7L0Jw5UsEbxmtyHn2T71mrZLkjg4Mp8gbhYoltPkEOHvAopz25-vZ8C2e1cOaAo5WPcbSIuFcB4DjBOM3t0UAO6JHkWLuAEYoe58lcxIQneyKdaYSLbV9cKqoUoFQpvKWYRHZbfszIyfsa18rmgTjzrtLDTPnc09DSJE24aQ8w3i8RXEDthW9T1J6LsTH_vwHdwUgkI-tC2PNeGrnM-dNSfzF3Y7-lwcGy0FsdXkPXytvDV7y4pZeeUiQ-0VdibIN2AjjfW60nfrPuOjepMFG6BBBbR37pHcyzext9epOAQ.48V1_ALb6US04U3b._e21tGGhac_peEFkLXr2dMPUZiUkrw.8LXqMd0JLGsxMaB5uoNaMpg7uUW_p40RlaZHCwMIyzk'
-    expect { Sandal.decrypt_token(token) do |header|
+    expect { Sandal.decode_token(token) do |header|
       rsa = OpenSSL::PKey::RSA.new(2048)
       alg = Sandal::Enc::Alg::RSA_OAEP.new(rsa)
       Sandal::Enc::A256GCM.new(alg)
