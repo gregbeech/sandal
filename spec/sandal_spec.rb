@@ -1,7 +1,37 @@
 require 'helper'
 require 'openssl'
+require 'multi_json'
 
 describe Sandal do
+
+  context '#encrypt_token' do
+
+    it 'supports zip using the DEFLATE algorithm' do
+      payload = 'some payload to be zipped'
+      private_key = OpenSSL::PKey::RSA.new(2048)
+      encrypter = Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(private_key.public_key))
+      token = Sandal.encrypt_token(payload, encrypter, { 'zip' => 'DEF' })
+      decoded_payload = Sandal.decode_token(token) do |header| 
+        Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(private_key))
+      end
+      decoded_payload.should == payload
+    end
+
+    it 'raises an ArgumentError if the zip parameter is present and nil' do
+      encrypter = Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(OpenSSL::PKey::RSA.new(2048)))
+      expect { 
+        Sandal.encrypt_token('any payload', encrypter, { 'zip' => nil }) 
+      }.to raise_error ArgumentError, 'Invalid zip algorithm.'
+    end
+
+    it 'raises an ArgumentError if the zip parameter is present and not "DEF"' do
+      encrypter = Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(OpenSSL::PKey::RSA.new(2048)))
+      expect { 
+        Sandal.encrypt_token('any payload', encrypter, { 'zip' => 'INVALID' }) 
+      }.to raise_error ArgumentError, 'Invalid zip algorithm.'
+    end
+
+  end
 
   it 'raises a token error when the token format is invalid' do
     expect { Sandal.decode_token('not a valid token') }.to raise_error Sandal::TokenError

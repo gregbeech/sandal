@@ -2,11 +2,15 @@
 
 Features:
 
-- The decode_token method now recursively decodes/decrypts nested tokens.
+- The decode_token method now recursively decodes/decrypts nested tokens rather than requiring multiple calls.
 
 Breaking changes:
 
 - The decode_token method is now used for both signed and encrypted tokens; the decrypt_token method has been removed.
+
+Bug fixes:
+
+- The zip parameter is now used in JWE tokens.
 
 ## 0.3.0 (20 April 2013)
 

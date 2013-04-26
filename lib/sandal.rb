@@ -1,5 +1,6 @@
 require 'multi_json'
 require 'openssl'
+require 'zlib'
 require 'sandal/version'
 require 'sandal/claims'
 require 'sandal/enc'
@@ -48,7 +49,7 @@ module Sandal
     ignore_signature: false,
     max_clock_skew: 0,
     valid_iss: [],
-    valid_aud: [],
+    valid_aud: []
   }
 
   # Overrides the default options.
@@ -121,6 +122,13 @@ module Sandal
     header['alg'] = encrypter.alg.name
     header = header_fields.merge(header) if header_fields
 
+    if header.has_key?('zip')
+      unless header['zip'] == 'DEF'
+        raise ArgumentError, 'Invalid zip algorithm.'
+      end
+      payload = Zlib::Deflate.deflate(payload, Zlib::BEST_COMPRESSION)
+    end 
+
     encrypter.encrypt(header, payload)
   end
 
@@ -128,9 +136,11 @@ module Sandal
   # into any nested tokens, and returns the payload.
   #
   # The block is called with the token header as the first parameter, and should
-  # return the appropriate signature method to validate the signature. It can
-  # optionally have a second options parameter which can be used to override the
-  # {DEFAULT_OPTIONS} on a per-token basis.
+  # return the appropriate signature or decryption method to either validate the
+  # signature or decrypt the token as applicable. When the tokens are nested, 
+  # this block will be called once per token. It can optionally have a second 
+  # options parameter which can be used to override the {DEFAULT_OPTIONS} on a 
+  # per-token basis; options are not persisted between yields.
   #
   # @param token [String] The encoded JSON Web Token.
   # @param depth [Integer] The maximum depth of token nesting to decode to.
@@ -154,6 +164,12 @@ module Sandal
 
     if is_encrypted?(parts)
       payload = decoder.decrypt(parts, decoded_parts)
+      if header.has_key?('zip')
+        unless header['zip'] == 'DEF'
+          raise Sandal::TokenError, 'Invalid zip algorithm.'
+        end
+        payload = Zlib::Inflate.inflate(payload)
+      end
     else
       payload = decoded_parts[1]
       unless options[:ignore_signature]
@@ -176,7 +192,7 @@ module Sandal
     end
   end
 
-private
+  private
 
   # Decodes and validates a signed JSON Web Token.
   def self.validate_signature(parts, signature, validator)
