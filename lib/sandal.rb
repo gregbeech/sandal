@@ -98,7 +98,7 @@ module Sandal
     signer ||= Sandal::Sig::NONE
 
     header = {}
-    header['alg'] = signer.name if signer.name != Sandal::Sig::NONE.name
+    header['alg'] = signer.name
     header = header_fields.merge(header) if header_fields
     header = MultiJson.dump(header)
 

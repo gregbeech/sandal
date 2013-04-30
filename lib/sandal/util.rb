@@ -22,7 +22,7 @@ module Sandal
     def jwt_strings_equal?(a, b)
       return true if a.object_id == b.object_id
       return false if a.nil? || b.nil? || a.length != b.length
-      a.codepoints.zip(b.codepoints).reduce(0) { |r, (a, b)| r |= a ^ b } == 0
+      a.codepoints.zip(b.codepoints).reduce(0) { |r, (x, y)| r |= x ^ y } == 0
     end
 
     # Base64 encodes a string, in compliance with the JWT specification.

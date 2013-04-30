@@ -11,6 +11,8 @@ Breaking changes:
 Bug fixes:
 
 - The zip parameter is now used in JWE tokens.
+- The 'none' algorithm value is now always set in plaintext tokens.
+- The zip parameter is now used when encrypting/decrypting JWE tokens.
 
 ## 0.3.0 (20 April 2013)
 
