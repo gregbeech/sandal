@@ -1,4 +1,4 @@
-## 0.4.0
+## 0.4.0 (30 April 2013)
 
 Features:
 
@@ -10,9 +10,10 @@ Breaking changes:
 
 Bug fixes:
 
-- The zip parameter is now used in JWE tokens.
 - The 'none' algorithm value is now always set in plaintext tokens.
 - The zip parameter is now used when encrypting/decrypting JWE tokens.
+- The Concat KDF function now works correctly when inputs have different string encodings by treating them all as binary.
+- Errors related to jwt_base64_encode not being found when running under rack (although they worked fine under rspec) are resolved.
 
 ## 0.3.0 (20 April 2013)
 

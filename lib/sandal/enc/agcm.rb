@@ -6,7 +6,7 @@ module Sandal
 
     # Base implementation of the AES/GCM family of encryption algorithms.
     class AGCM
-      extend Sandal::Util
+      include Sandal::Util
 
       # The JWA name of the encryption.
       attr_reader :name

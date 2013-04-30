@@ -5,7 +5,7 @@ module Sandal
 
     # Base implementation of the HMAC-SHA family of signature algorithms.
     class HS
-      extend Sandal::Util
+      include Sandal::Util
 
       # @return [String] The JWA name of the algorithm.
       attr_reader :name

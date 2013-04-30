@@ -41,14 +41,14 @@ module Sandal
     def self.concat_kdf_round_input(key, keydatalen, algorithm_id, 
                                     party_u_info, party_v_info, 
                                     supp_pub_info, supp_priv_info)
-      input = ''
-      input << key
+      input = ''.force_encoding('binary')
+      input << key.force_encoding('binary')
       input << [keydatalen].pack('N')
-      input << algorithm_id
-      input << (party_u_info == 0 ? [0].pack('N') : party_u_info)
-      input << (party_v_info == 0 ? [0].pack('N') : party_v_info)
-      input << supp_pub_info if supp_pub_info
-      input << supp_priv_info if supp_priv_info
+      input << algorithm_id.force_encoding('binary')
+      input << (party_u_info == 0 ? [0].pack('N') : party_u_info.force_encoding('binary'))
+      input << (party_v_info == 0 ? [0].pack('N') : party_v_info.force_encoding('binary'))
+      input << supp_pub_info.force_encoding('binary') if supp_pub_info
+      input << supp_priv_info.force_encoding('binary') if supp_priv_info
       input
     end
 

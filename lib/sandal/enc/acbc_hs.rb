@@ -7,7 +7,7 @@ module Sandal
     # Base implementation of the AES/CBC+HMAC-SHA family of encryption 
     # algorithms.
     class ACBC_HS
-      extend Sandal::Util
+      include Sandal::Util
 
       # The JWA name of the encryption.
       attr_reader :name
