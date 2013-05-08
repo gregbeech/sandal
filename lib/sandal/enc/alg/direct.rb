@@ -38,7 +38,7 @@ module Sandal
         # @raise [Sandal::TokenError] encrypted_cmk is not nil or empty.
         def decrypt_cmk(encrypted_cmk)
           unless encrypted_cmk.nil? || encrypted_cmk.empty?
-            raise Sandal::TokenError, 'Token must not include encrypted CMK.' 
+            raise Sandal::InvalidTokenError, 'Token must not include encrypted CMK.' 
           end
           @cmk
         end

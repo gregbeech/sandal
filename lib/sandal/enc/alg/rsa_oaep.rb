@@ -38,7 +38,7 @@ module Sandal
         def decrypt_cmk(encrypted_cmk)
           @key.private_decrypt(encrypted_cmk, @padding)
         rescue
-          raise Sandal::TokenError, 'Cannot decrypt content master key.'
+          raise Sandal::InvalidTokenError, 'Cannot decrypt content master key.'
         end
 
       end

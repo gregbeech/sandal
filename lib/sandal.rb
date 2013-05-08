@@ -16,11 +16,18 @@ require 'sandal/util'
 module Sandal
   extend Sandal::Util
 
-  # The error that is raised when a token is invalid.
+  # The error that is raised when there is a problem with a token.
   class TokenError < StandardError; end
 
+  # The error that is raised when a token is invalid.
+  class InvalidTokenError < TokenError; end
+
   # The error that is raised when a claim within a token is invalid.
-  class ClaimError < TokenError; end
+  class ClaimError < InvalidTokenError; end
+
+  # The error that is raised when a token is unsupported (e.g. the algorithm
+  # used to encrypt the token is not supported by this library).
+  class UnsupportedTokenError < TokenError; end
 
   # The default options for token handling.
   #
@@ -163,10 +170,10 @@ module Sandal
     decoder = yield header, options if block_given?
 
     if is_encrypted?(parts)
-      payload = decoder.decrypt(parts, decoded_parts)
+      payload = decoder.decrypt(parts)
       if header.has_key?('zip')
         unless header['zip'] == 'DEF'
-          raise Sandal::TokenError, 'Invalid zip algorithm.'
+          raise Sandal::InvalidTokenError, 'Invalid zip algorithm.'
         end
         payload = Zlib::Inflate.inflate(payload)
       end

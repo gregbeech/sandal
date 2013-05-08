@@ -35,6 +35,15 @@ module Sandal
       end
     end
 
+    def self.token_parts(token)
+      parts = token.is_a?(Array) ? token : token.split('.')
+      raise ArgumentError unless parts.length == 5
+      decoded_parts = parts.map { |part| jwt_base64_decode(part) }
+      return parts, decoded_parts
+    rescue ArgumentError
+      raise Sandal::InvalidTokenError, 'Invalid token encoding.'
+    end
+
     private
 
     # The round input for the Concat KDF function (excluding round number).

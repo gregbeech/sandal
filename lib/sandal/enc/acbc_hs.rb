@@ -43,18 +43,19 @@ module Sandal
         sec_parts = [MultiJson.dump(header), encrypted_key, iv, ciphertext]
         sec_input = sec_parts.map { |part| jwt_base64_encode(part) }.join('.')
         cik = derive_integrity_key(cmk)
-        integrity_value = compute_integrity_value(cik, sec_input)
+        auth_tag = compute_auth_tag(cik, sec_input)
 
-        sec_input << '.' << jwt_base64_encode(integrity_value)
+        sec_input << '.' << jwt_base64_encode(auth_tag)
       end
 
-      def decrypt(parts, decoded_parts)
+      def decrypt(token)
+        parts, decoded_parts = Sandal::Enc.token_parts(token)
         cmk = @alg.decrypt_cmk(decoded_parts[1])
         
         cik = derive_integrity_key(cmk)
-        integrity_value = compute_integrity_value(cik, parts.take(4).join('.'))
-        unless jwt_strings_equal?(decoded_parts[4], integrity_value)
-          raise Sandal::TokenError, 'Invalid integrity value.'
+        auth_tag = compute_auth_tag(cik, parts.take(4).join('.'))
+        unless jwt_strings_equal?(decoded_parts[4], auth_tag)
+          raise Sandal::InvalidTokenError, 'Invalid integrity value.'
         end
 
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
@@ -63,14 +64,14 @@ module Sandal
           cipher.iv = decoded_parts[2]
           cipher.update(decoded_parts[3]) + cipher.final
         rescue OpenSSL::Cipher::CipherError
-          raise Sandal::TokenError, 'Invalid token.'
+          raise Sandal::InvalidTokenError, 'Cannot decrypt token.'
         end
       end
 
     private
 
       # Computes the integrity value.
-      def compute_integrity_value(cik, sec_input)
+      def compute_auth_tag(cik, sec_input)
         OpenSSL::HMAC.digest(@digest, cik, sec_input)
       end
 
