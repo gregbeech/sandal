@@ -1,3 +1,13 @@
+## 0.5.0
+
+Features:
+
+- Updated to JWT draft-07 specification, and corresponding JWE, JWS and JWA drafts.
+
+Breaking changes:
+
+- Tokens are not backwards compatible with previous versions of the library. Similarly, tokens created using older versions of the library cannot be decoded.
+
 ## 0.4.0 (30 April 2013)
 
 Features:
