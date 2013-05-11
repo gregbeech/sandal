@@ -28,7 +28,7 @@ module Sandal
 
       exp = time_claim('exp')
       if exp && exp <= (Time.now - max_clock_skew)
-        raise Sandal::ClaimError, 'The token has expired.' 
+        raise Sandal::ExpiredTokenError, 'The token has expired.' 
       end
     end
 

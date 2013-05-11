@@ -130,14 +130,14 @@ describe Sandal::Claims do
       claims.validate_exp(120)
     end
 
-    it 'raises a ClaimError when the expiry time is in the past with no clock skew' do
+    it 'raises an ExpiredTokenError when the expiry time is in the past with no clock skew' do
       claims = { 'exp' => (Time.now - 300).to_i }.extend(Sandal::Claims)
-      expect { claims.validate_exp }.to raise_error Sandal::ClaimError
+      expect { claims.validate_exp }.to raise_error Sandal::ExpiredTokenError
     end
 
-    it 'raises a ClaimError when the expiry time is in the past and outside the max clock skew' do
+    it 'raises an ExpiredTokenError when the expiry time is in the past and outside the max clock skew' do
       claims = { 'exp' => (Time.now - 300).to_i }.extend(Sandal::Claims)
-      expect { claims.validate_exp(120) }.to raise_error Sandal::ClaimError
+      expect { claims.validate_exp(120) }.to raise_error Sandal::ExpiredTokenError
     end
 
   end

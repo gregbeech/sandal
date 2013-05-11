@@ -3,10 +3,12 @@
 Features:
 
 - Updated to JWT draft-07 specification, and corresponding JWE, JWS and JWA drafts.
+- Added a KeyError class for when invalid keys are given to the library.
+- Added an ExpiredTokenError class to make handling the common case of expired tokens easier.
 
 Breaking changes:
 
-- Tokens are not backwards compatible with previous versions of the library. Similarly, tokens created using older versions of the library cannot be decoded.
+- Tokens are not backwards compatible with previous versions of the library due to changes in the specification.
 
 ## 0.4.0 (30 April 2013)
 

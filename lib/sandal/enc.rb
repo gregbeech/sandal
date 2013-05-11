@@ -1,8 +1,10 @@
 require 'openssl'
+require 'sandal/util'
 
 module Sandal
   # Contains encryption (JWE) functionality.
   module Enc
+    extend Sandal::Util
 
     # The Concat Key Derivation Function.
     #
@@ -35,6 +37,10 @@ module Sandal
       end
     end
 
+    # Gets the decoded parts of a JWE token.
+    #
+    # @param token [String or Array] The token, or encoded token parts.
+    # @return [[Array, Array]] The encoded parts and the decoded parts.
     def self.token_parts(token)
       parts = token.is_a?(Array) ? token : token.split('.')
       raise ArgumentError unless parts.length == 5

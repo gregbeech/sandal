@@ -11,15 +11,15 @@ module Sandal
         # @return [String] The JWA name of the algorithm.
         attr_reader :name
 
-        # @return [String] The pre-shared content master key key.
-        attr_reader :cmk
+        # @return [String] The pre-shared key.
+        attr_reader :direct_key
 
         # Creates a new instance.
         #
-        # @param cmk [String] The pre-shared content master key.
-        def initialize(cmk)
+        # @param cmk [String] The pre-shared key.
+        def initialize(direct_key)
           @name = 'dir'
-          @cmk = cmk
+          @direct_key = direct_key
         end
 
         # Returns an empty string as the content master key is not included in 
@@ -40,7 +40,7 @@ module Sandal
           unless encrypted_cmk.nil? || encrypted_cmk.empty?
             raise Sandal::InvalidTokenError, 'Token must not include encrypted CMK.' 
           end
-          @cmk
+          @direct_key
         end
 
       end

@@ -16,6 +16,9 @@ require 'sandal/util'
 module Sandal
   extend Sandal::Util
 
+  # The error that is raised when a key provided for signing/encryption/etc. is invalid.
+  class KeyError < StandardError; end
+
   # The error that is raised when there is a problem with a token.
   class TokenError < StandardError; end
 
@@ -25,8 +28,11 @@ module Sandal
   # The error that is raised when a claim within a token is invalid.
   class ClaimError < InvalidTokenError; end
 
-  # The error that is raised when a token is unsupported (e.g. the algorithm
-  # used to encrypt the token is not supported by this library).
+  # The error that is raised when the token has expired.
+  class ExpiredTokenError < ClaimError; end
+
+  # The error that is raised when a token is unsupported (e.g. the algorithm used to encrypt the token is not supported 
+  # by this library or by the Ruby platform it is executing on).
   class UnsupportedTokenError < TokenError; end
 
   # The default options for token handling.

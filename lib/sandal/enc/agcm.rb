@@ -4,14 +4,14 @@ require 'sandal/util'
 module Sandal
   module Enc
 
-    # Base implementation of the AES/GCM family of encryption algorithms.
+    # Base implementation of the A*GCM family of encryption methods.
     class AGCM
       include Sandal::Util
 
-      # The JWA name of the encryption.
+      # The JWA name of the encryption method.
       attr_reader :name
 
-      # The JWA algorithm used to encrypt the content master key.
+      # The JWA algorithm used to encrypt the content encryption key.
       attr_reader :alg
 
       def initialize(aes_size, alg)
@@ -55,14 +55,14 @@ module Sandal
 
     end
 
-    # The AES-128-GCM encryption algorithm.
+    # The A128GCM encryption method.
     class A128GCM < Sandal::Enc::AGCM
       def initialize(key)
         super(128, key)
       end
     end
 
-    # The AES-256-GCM encryption algorithm.
+    # The A256GCM encryption method.
     class A256GCM < Sandal::Enc::AGCM
       def initialize(key)
         super(256, key)
