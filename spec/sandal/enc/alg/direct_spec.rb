@@ -6,48 +6,48 @@ describe Sandal::Enc::Alg::Direct do
   context '#name' do
 
     it 'is "dir"' do
-      alg = Sandal::Enc::Alg::Direct.new('some cmk')
+      alg = Sandal::Enc::Alg::Direct.new('some key')
       alg.name.should == 'dir'
     end
 
   end
 
-  context '#cmk' do
+  context '#direct_key' do
 
-    it 'returns the real CMK' do
-      cmk = 'the real cmk'
-      alg = Sandal::Enc::Alg::Direct.new(cmk)
-      alg.cmk.should == cmk
+    it 'returns the real key' do
+      key = 'the real key'
+      alg = Sandal::Enc::Alg::Direct.new(key)
+      alg.direct_key.should == key
     end
 
   end
 
-  context '#encrypt_cmk' do
+  context '#encrypt_key' do
 
     it 'returns an empty string' do
-      alg = Sandal::Enc::Alg::Direct.new('the real cmk')
-      alg.encrypt_cmk('any value').should == ''
+      alg = Sandal::Enc::Alg::Direct.new('the real key')
+      alg.encrypt_key('any value').should == ''
     end
 
   end
 
-  context '#decrypt_cmk' do
+  context '#decrypt_key' do
 
     it 'returns the real CMK when the value to decrypt is nil' do
-      cmk = 'the real cmk'
-      alg = Sandal::Enc::Alg::Direct.new(cmk)
-      alg.decrypt_cmk(nil).should == cmk
+      key = 'the real key'
+      alg = Sandal::Enc::Alg::Direct.new(key)
+      alg.decrypt_key(nil).should == key
     end
 
     it 'returns the real CMK when the value to decrypt is empty' do
-      cmk = 'the real cmk'
-      alg = Sandal::Enc::Alg::Direct.new(cmk)
-      alg.decrypt_cmk('').should == cmk
+      key = 'the real key'
+      alg = Sandal::Enc::Alg::Direct.new(key)
+      alg.decrypt_key('').should == key
     end
 
     it 'raises a TokenError if the value to decrypt is not nil or empty' do
-      alg = Sandal::Enc::Alg::Direct.new('the real cmk')
-      expect { alg.decrypt_cmk('a value') }.to raise_error Sandal::TokenError
+      alg = Sandal::Enc::Alg::Direct.new('the real key')
+      expect { alg.decrypt_key('a value') }.to raise_error Sandal::TokenError
     end
 
   end

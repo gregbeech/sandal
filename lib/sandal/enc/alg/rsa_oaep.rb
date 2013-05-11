@@ -4,7 +4,7 @@ module Sandal
   module Enc
     module Alg
 
-      # The RSAES with OAEP key encryption mechanism.
+      # The RSA-OAEP key encryption algorithm.
       class RSA_OAEP
 
         # @return [String] The JWA name of the algorithm.
@@ -12,33 +12,32 @@ module Sandal
 
         # Creates a new instance.
         #
-        # @param key [OpenSSL::PKey::RSA or String] The key to use for CMK 
-        # encryption (public) or decryption (private). If the value is a String 
-        # then it will be passed to the constructor of the RSA class. This must 
+        # @param rsa_key [OpenSSL::PKey::RSA or String] The RSA key to use for key encryption (public) or decryption 
+        # (private). If the value is a String then it will be passed to the constructor of the RSA class. This must 
         # be at least 2048 bits to be compliant with the JWA specification.
-        def initialize(key)
+        def initialize(rsa_key)
           @name = 'RSA-OAEP'
-          @key = key.is_a?(String) ? OpenSSL::PKey::RSA.new(key) : key
+          @rsa_key = rsa_key.is_a?(String) ? OpenSSL::PKey::RSA.new(rsa_key) : rsa_key
           @padding = OpenSSL::PKey::RSA::PKCS1_OAEP_PADDING
         end
 
         # Encrypts the content master key.
         #
-        # @param cmk [String] The content master key.
+        # @param key [String] The content master key.
         # @return [String] The encrypted content master key.
-        def encrypt_cmk(cmk)
-          @key.public_encrypt(cmk, @padding)
+        def encrypt_key(key)
+          @rsa_key.public_encrypt(key, @padding)
         end
 
         # Decrypts the content master key.
         #
-        # @param encrypted_cmk [String] The encrypted content master key.
+        # @param encrypted_key [String] The encrypted content master key.
         # @return [String] The pre-shared content master key.
         # @raise [Sandal::TokenError] The content master key can't be decrypted.
-        def decrypt_cmk(encrypted_cmk)
-          @key.private_decrypt(encrypted_cmk, @padding)
+        def decrypt_key(encrypted_key)
+          @rsa_key.private_decrypt(encrypted_key, @padding)
         rescue
-          raise Sandal::InvalidTokenError, 'Cannot decrypt content master key.'
+          raise Sandal::InvalidTokenError, 'Cannot decrypt content key.'
         end
 
       end

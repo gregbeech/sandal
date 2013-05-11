@@ -142,7 +142,7 @@ module Sandal
       payload = Zlib::Deflate.deflate(payload, Zlib::BEST_COMPRESSION)
     end 
 
-    encrypter.encrypt(header, payload)
+    encrypter.encrypt(MultiJson.dump(header), payload)
   end
 
   # Decodes and validates a signed and/or encrypted JSON Web Token, recursing

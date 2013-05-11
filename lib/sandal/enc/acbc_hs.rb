@@ -18,7 +18,7 @@ module Sandal
       #
       # @param aes_size [Integer] The size of the AES algorithm.
       # @param sha_size [Integer] The size of the SHA algorithm.
-      # @param alg [#name, #encrypt_cmk, #decrypt_cmk] The algorithm to use to encrypt and/or decrypt the AES key.
+      # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(aes_size, sha_size, alg)
         @aes_size = aes_size
         @sha_size = sha_size
@@ -31,14 +31,14 @@ module Sandal
       def encrypt(header, payload)
         key = get_encryption_key
         mac_key, enc_key = derive_keys(key)
-        encrypted_key = @alg.encrypt_cmk(key)
+        encrypted_key = @alg.encrypt_key(key)
 
         cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
         cipher.key = enc_key
         iv = cipher.random_iv
         ciphertext = cipher.update(payload) + cipher.final
 
-        auth_data = [MultiJson.dump(header), encrypted_key].map { |part| jwt_base64_encode(part) }.join('.')
+        auth_data = [header, encrypted_key].map { |part| jwt_base64_encode(part) }.join('.')
         auth_data_length = [auth_data.length * 8].pack('Q>')
         mac_input = [auth_data, iv, ciphertext, auth_data_length].join
         mac = OpenSSL::HMAC.digest(@digest, mac_key, mac_input)
@@ -52,7 +52,7 @@ module Sandal
         parts, decoded_parts = Sandal::Enc.token_parts(token)
         header, encrypted_key, iv, ciphertext, auth_tag = *decoded_parts
 
-        key = @alg.decrypt_cmk(encrypted_key)
+        key = @alg.decrypt_key(encrypted_key)
         mac_key, enc_key = derive_keys(key)
 
         auth_data = parts.take(2).join('.')
@@ -77,15 +77,15 @@ module Sandal
 
       # Gets the key to use for mac and encryption
       def get_encryption_key
-        key_size = @sha_size / 8
+        key_bytes = @sha_size / 8
         if @alg.respond_to?(:direct_key)
           key = @alg.direct_key
-          unless key.size == key_size
-            raise Sandal::KeyError, "The direct key must be #{@key_size * 8} bits"
+          unless key.size == key_bytes
+            raise Sandal::KeyError, "The pre-shared content key must be #{@sha_size} bits."
           end
           key
         else
-          SecureRandom.random_bytes(key_size)
+          SecureRandom.random_bytes(key_bytes)
         end
       end
 
@@ -101,15 +101,23 @@ module Sandal
 
     # The A128CBC-HS256 encryption method.
     class A128CBC_HS256 < Sandal::Enc::ACBC_HS
+
+      # The size of key that is required, in bits.
+      KEY_SIZE = 256
+
       def initialize(key)
-        super(128, 256, key)
+        super(KEY_SIZE / 2, KEY_SIZE, key)
       end
     end
 
     # The A256CBC-HS512 encryption method.
     class A256CBC_HS512 < Sandal::Enc::ACBC_HS
+
+      # The size of key that is required, in bits.
+      KEY_SIZE = 512
+
       def initialize(key)
-        super(256, 512, key)
+        super(KEY_SIZE / 2, KEY_SIZE, key)
       end
     end
 
