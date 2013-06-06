@@ -14,10 +14,9 @@ module Sandal
       #
       # @param sha_size [Integer] The size of the SHA algorithm.
       # @param prime_size [Integer] The size of the ECDSA primes.
-      # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or 
-      #   validation (public).
+      # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public).
       def initialize(sha_size, prime_size, key)
-        @name = "ES#{sha_size}"
+        @name = self.class::NAME
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @prime_size = prime_size
         @key = key
@@ -36,7 +35,7 @@ module Sandal
 
       # Validates a payload signature and returns whether the signature matches.
       #
-      # @param signature [String] The signature to verify.
+      # @param signature [String] The signature to validate.
       # @param payload [String] The payload of the token.
       # @return [Boolean] true if the signature is correct; otherwise false.
       def valid?(signature, payload)
@@ -109,40 +108,58 @@ module Sandal
 
     # The ECDSA-SHA256 signing algorithm.
     class ES256 < Sandal::Sig::ES
+
+      # The JWA name of the algorithm.
+      NAME = "ES256"
+
+      # The ECDSA curve name.
+      CURVE_NAME = "prime256v1"
+
       # Creates a new instance.
       #
-      # @param key [OpenSSL::PKey::EC or String] The key to use for signing 
-      #   (private) or validation (public). If the value is a String then it 
-      #   will be passed to the constructor of the EC class.
+      # @param key [OpenSSL::PKey::EC or String] The key to use for signing (private) or validation (public). If the 
+      #   value is a String then it will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "prime256v1" group.
       def initialize(key)
-        super(256, 256, make_key(key, 'prime256v1'))
+        super(256, 256, make_key(key, CURVE_NAME))
       end
     end
 
     # The ECDSA-SHA384 signing algorithm.
     class ES384 < Sandal::Sig::ES
+
+      # The JWA name of the algorithm.
+      NAME = "ES384"
+
+      # The ECDSA curve name.
+      CURVE_NAME = "secp384r1"
+
       # Creates a new instance.
       #
-      # @param key [OpenSSL::PKey::EC or String] The key to use for signing 
-      #   (private) or validation (public). If the value is a String then it 
-      #   will be passed to the constructor of the EC class.
+      # @param key [OpenSSL::PKey::EC or String] The key to use for signing (private) or validation (public). If the 
+      #   value is a String then it will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "secp384r1" group.
       def initialize(key)
-        super(384, 384, make_key(key, 'secp384r1'))
+        super(384, 384, make_key(key, CURVE_NAME))
       end
     end
 
     # The ECDSA-SHA512 signing algorithm.
     class ES512 < Sandal::Sig::ES
+
+      # The JWA name of the algorithm.
+      NAME = "ES512"
+
+      # The ECDSA curve name.
+      CURVE_NAME = "secp521r1"
+
       # Creates a new instance.
       #
-      # @param key [OpenSSL::PKey::EC or String] The key to use for signing 
-      #   (private) or validation (public). If the value is a String then it 
-      #   will be passed to the constructor of the EC class.
+      # @param key [OpenSSL::PKey::EC or String] The key to use for signing (private) or validation (public). If the 
+      #   value is a String then it will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "secp521r1" group.
       def initialize(key)
-        super(512, 521, make_key(key, 'secp521r1'))
+        super(512, 521, make_key(key, CURVE_NAME))
       end
     end
 

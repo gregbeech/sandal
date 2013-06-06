@@ -16,7 +16,7 @@ module Sandal
       # @param sha_size [Integer] The size of the SHA algorithm.
       # @param key [String] The key to use for signing or validation.
       def initialize(sha_size, key)
-        @name = "HS#{sha_size}"
+        @name = self.class::NAME
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @key = key
       end
@@ -31,7 +31,7 @@ module Sandal
 
       # Validates a payload signature and returns whether the signature matches.
       #
-      # @param signature [String] The signature to verify.
+      # @param signature [String] The signature to validate.
       # @param payload [String] The payload of the token.
       # @return [Boolean] true if the signature is correct; otherwise false.
       def valid?(signature, payload)
@@ -42,6 +42,10 @@ module Sandal
 
     # The HMAC-SHA256 signing algorithm.
     class HS256 < Sandal::Sig::HS
+
+      # The JWA name of the algorithm.
+      NAME = "HS256"
+
       # Creates a new instance.
       #
       # @param key [String] The key to use for signing or validation.
@@ -52,6 +56,10 @@ module Sandal
 
     # The HMAC-SHA384 signing algorithm.
     class HS384 < Sandal::Sig::HS
+
+      # The JWA name of the algorithm.
+      NAME = "HS384"
+
       # Creates a new instance.
       #
       # @param key [String] The key to use for signing or validation.
@@ -62,6 +70,10 @@ module Sandal
 
     # The HMAC-SHA512 signing algorithm.
     class HS512 < Sandal::Sig::HS
+
+      # The JWA name of the algorithm.
+      NAME = "HS512"
+
       # Creates a new instance.
       #
       # @param key [String] The key to use for signing or validation.

@@ -24,7 +24,7 @@ module Sandal
       def initialize(aes_size, sha_size, alg)
         @aes_size = aes_size
         @sha_size = sha_size
-        @name = "A#{aes_size}CBC-HS#{@sha_size}"
+        @name = self.class::NAME
         @cipher_name = "aes-#{aes_size}-cbc"
         @alg = alg
         @digest = OpenSSL::Digest.new("sha#{@sha_size}")
@@ -113,6 +113,9 @@ module Sandal
     # The A128CBC-HS256 encryption method.
     class A128CBC_HS256 < Sandal::Enc::ACBC_HS
 
+      # The JWA name of the algorithm.
+      NAME = "A128CBC-HS256"
+
       # The size of key that is required, in bits.
       KEY_SIZE = 256
 
@@ -127,6 +130,9 @@ module Sandal
 
     # The A256CBC-HS512 encryption method.
     class A256CBC_HS512 < Sandal::Enc::ACBC_HS
+
+      # The JWA name of the algorithm.
+      NAME = "A256CBC-HS512"
 
       # The size of key that is required, in bits.
       KEY_SIZE = 512

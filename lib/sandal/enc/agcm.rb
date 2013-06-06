@@ -23,7 +23,7 @@ module Sandal
       # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(aes_size, alg)
         @aes_size = aes_size
-        @name = "A#{aes_size}GCM"
+        @name = self.class::NAME
         @cipher_name = "aes-#{aes_size}-gcm"
         @alg = alg
       end
@@ -74,6 +74,9 @@ module Sandal
     # The A128GCM encryption method.
     class A128GCM < Sandal::Enc::AGCM
 
+      # The JWA name of the algorithm.
+      NAME = "A128GCM"
+
       # The size of key that is required, in bits.
       KEY_SIZE = 128
 
@@ -88,6 +91,9 @@ module Sandal
 
     # The A256GCM encryption method.
     class A256GCM < Sandal::Enc::AGCM
+
+      # The JWA name of the algorithm.
+      NAME = "A256GCM"
 
       # The size of key that is required, in bits.
       KEY_SIZE = 256

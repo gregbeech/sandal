@@ -5,6 +5,7 @@ Features:
 - Updated to JWT draft-08 specification, and corresponding JWE, JWS and JWA drafts.
 - Added a KeyError class for when invalid keys are given to the library.
 - Added an ExpiredTokenError class to make handling the common case of expired tokens easier.
+- Added a NAME constant to all classes with a JWA name to save user having to hard-code the name string.
 
 Breaking changes:
 

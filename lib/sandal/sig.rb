@@ -26,7 +26,7 @@ module Sandal
 
       # Validates that a signature is nil or empty.
       #
-      # @param signature [String] The signature to verify.
+      # @param signature [String] The signature to validate.
       # @param payload [String] This parameter is ignored.
       # @return [Boolean] true if the signature is nil/empty; otherwise false.
       def valid?(signature, payload)

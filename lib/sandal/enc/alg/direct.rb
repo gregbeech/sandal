@@ -1,4 +1,4 @@
-require 'openssl'
+require "openssl"
 
 module Sandal
   module Enc
@@ -6,6 +6,9 @@ module Sandal
 
       # The direct ("dir") key encryption algorithm, which uses a pre-shared symmetric key.
       class Direct
+
+        # The JWA name of the algorithm.
+        NAME = "dir"
 
         # @return [String] The JWA name of the algorithm.
         attr_reader :name
@@ -17,7 +20,7 @@ module Sandal
         #
         # @param preshared_key [String] The pre-shared symmetric key.
         def initialize(preshared_key)
-          @name = "dir"
+          @name = NAME
           @preshared_key = preshared_key
         end
 
