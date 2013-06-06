@@ -2,7 +2,7 @@
 
 Features:
 
-- Updated to JWT draft-07 specification, and corresponding JWE, JWS and JWA drafts.
+- Updated to JWT draft-08 specification, and corresponding JWE, JWS and JWA drafts.
 - Added a KeyError class for when invalid keys are given to the library.
 - Added an ExpiredTokenError class to make handling the common case of expired tokens easier.
 

@@ -12,12 +12,12 @@ describe Sandal::Enc::Alg::Direct do
 
   end
 
-  context '#direct_key' do
+  context '#preshared_key' do
 
-    it 'returns the real key' do
-      key = 'the real key'
+    it 'returns the pre-shared key' do
+      key = 'the pre-shared key'
       alg = Sandal::Enc::Alg::Direct.new(key)
-      alg.direct_key.should == key
+      alg.preshared_key.should == key
     end
 
   end
@@ -33,21 +33,21 @@ describe Sandal::Enc::Alg::Direct do
 
   context '#decrypt_key' do
 
-    it 'returns the real CMK when the value to decrypt is nil' do
-      key = 'the real key'
+    it 'returns the pre-shared content key when the value to decrypt is nil' do
+      key = 'a pre-shared key'
       alg = Sandal::Enc::Alg::Direct.new(key)
       alg.decrypt_key(nil).should == key
     end
 
-    it 'returns the real CMK when the value to decrypt is empty' do
-      key = 'the real key'
+    it 'returns the pre-shared content key when the value to decrypt is empty' do
+      key = 'my pre-shared key'
       alg = Sandal::Enc::Alg::Direct.new(key)
       alg.decrypt_key('').should == key
     end
 
-    it 'raises a TokenError if the value to decrypt is not nil or empty' do
-      alg = Sandal::Enc::Alg::Direct.new('the real key')
-      expect { alg.decrypt_key('a value') }.to raise_error Sandal::TokenError
+    it 'raises an InvalidTokenError if the value to decrypt is not nil or empty' do
+      alg = Sandal::Enc::Alg::Direct.new('the pre-shared key')
+      expect { alg.decrypt_key('a value') }.to raise_error Sandal::InvalidTokenError
     end
 
   end

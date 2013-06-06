@@ -7,5 +7,4 @@ module Sandal
 end
 
 require 'sandal/enc/alg/direct'
-require 'sandal/enc/alg/rsa1_5'
-require 'sandal/enc/alg/rsa_oaep'
+require 'sandal/enc/alg/rsa'

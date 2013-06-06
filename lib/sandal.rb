@@ -8,19 +8,21 @@ require 'sandal/sig'
 require 'sandal/util'
 
 
-# A library for creating and reading JSON Web Tokens (JWT), supporting JSON Web 
-# Signatures (JWS) and JSON Web Encryption (JWE).
+# A library for creating and reading JSON Web Tokens (JWT), supporting JSON Web Signatures (JWS) and JSON Web Encryption
+# (JWE).
 #
-# Currently supports draft-06 of the JWT spec, and draft-08 of the JWS and JWE 
-# specs.
+# Currently supports draft-07 of the JWT spec, and draft-10 of the JWS and JWE specs.
 module Sandal
   extend Sandal::Util
 
+  # The base error for all errors raised by this library.
+  class Error < StandardError; end
+
   # The error that is raised when a key provided for signing/encryption/etc. is invalid.
-  class KeyError < StandardError; end
+  class KeyError < Error; end
 
   # The error that is raised when there is a problem with a token.
-  class TokenError < StandardError; end
+  class TokenError < Error; end
 
   # The error that is raised when a token is invalid.
   class InvalidTokenError < TokenError; end
@@ -38,24 +40,21 @@ module Sandal
   # The default options for token handling.
   #
   # ignore_exp:: 
-  #   Whether to ignore the expiry date of the token. This setting is just to
-  #   help get things working and should always be false in real apps!
+  #   Whether to ignore the expiry date of the token. This setting is just to help get things working and should always
+  #   be false in real apps!
   # ignore_nbf:: 
-  #   Whether to ignore the not-before date of the token. This setting is just 
-  #   to help get things working and should always be false in real apps!
+  #   Whether to ignore the not-before date of the token. This setting is just to help get things working and should
+  #   always be false in real apps!
   # ignore_signature:: 
-  #   Whether to ignore the signature of signed (JWS) tokens.  This setting is 
-  #   just tohelp get things working and should always be false in real apps!
+  #   Whether to ignore the signature of signed (JWS) tokens.  This setting is just tohelp get things working and should
+  #   always be false in real apps!
   # max_clock_skew:: 
-  #   The maximum clock skew, in seconds, when validating times. If your server
-  #   time is out of sync with the token server then this can be increased to
-  #   take that into account. It probably shouldn't be more than about 300.
+  #   The maximum clock skew, in seconds, when validating times. If your server time is out of sync with the token
+  #   server then this can be increased to take that into account. It probably shouldn't be more than about 300.
   # valid_iss:: 
-  #   A list of valid token issuers, if validation of the issuer claim is 
-  #   required.
+  #   A list of valid token issuers, if validation of the issuer claim is required.
   # valid_aud:: 
-  #   A list of valid audiences, if validation of the audience claim is
-  #   required.
+  #   A list of valid audiences, if validation of the audience claim is required.
   DEFAULT_OPTIONS = {
     ignore_exp: false,
     ignore_nbf: false,
@@ -67,8 +66,7 @@ module Sandal
 
   # Overrides the default options.
   #
-  # @param defaults [Hash] The options to override (see {DEFAULT_OPTIONS} for
-  #   details).
+  # @param defaults [Hash] The options to override (see {DEFAULT_OPTIONS} for details).
   # @return [Hash] The new default options.
   def self.default!(defaults)
     DEFAULT_OPTIONS.merge!(defaults)
@@ -100,12 +98,9 @@ module Sandal
 
   # Creates a signed JSON Web Token.
   #
-  # @param payload [String or Hash] The payload of the token. Hashes will be 
-  #   encoded as JSON.
-  # @param signer [#name,#sign] The token signer, which may be nil for an 
-  #   unsigned token.
-  # @param header_fields [Hash] Header fields for the token (note: do not
-  #   include 'alg').
+  # @param payload [String or Hash] The payload of the token. Hashes will be encoded as JSON.
+  # @param signer [#name,#sign] The token signer, which may be nil for an unsigned token.
+  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg').
   # @return [String] A signed JSON Web Token.
   def self.encode_token(payload, signer, header_fields = nil)
     signer ||= Sandal::Sig::NONE
@@ -126,8 +121,7 @@ module Sandal
   #
   # @param payload [String] The payload of the token.
   # @param encrypter [#name,#alg,#encrypt] The token encrypter.
-  # @param header_fields [Hash] Header fields for the token (note: do not
-  #   include 'alg' or 'enc').
+  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg' or 'enc').
   # @return [String] An encrypted JSON Web Token.
   def self.encrypt_token(payload, encrypter, header_fields = nil)
     header = {}
@@ -145,28 +139,22 @@ module Sandal
     encrypter.encrypt(MultiJson.dump(header), payload)
   end
 
-  # Decodes and validates a signed and/or encrypted JSON Web Token, recursing
-  # into any nested tokens, and returns the payload.
+  # Decodes and validates a signed and/or encrypted JSON Web Token, recursing into any nested tokens, and returns the 
+  # payload.
   #
-  # The block is called with the token header as the first parameter, and should
-  # return the appropriate signature or decryption method to either validate the
-  # signature or decrypt the token as applicable. When the tokens are nested, 
-  # this block will be called once per token. It can optionally have a second 
-  # options parameter which can be used to override the {DEFAULT_OPTIONS} on a 
-  # per-token basis; options are not persisted between yields.
+  # The block is called with the token header as the first parameter, and should return the appropriate signature or
+  # decryption method to either validate the signature or decrypt the token as applicable. When the tokens are nested, 
+  # this block will be called once per token. It can optionally have a second options parameter which can be used to
+  # override the {DEFAULT_OPTIONS} on a per-token basis; options are not persisted between yields.
   #
   # @param token [String] The encoded JSON Web Token.
   # @param depth [Integer] The maximum depth of token nesting to decode to.
   # @yieldparam header [Hash] The JWT header values.
-  # @yieldparam options [Hash] (Optional) A hash that can be used to override 
-  #   the default options.
-  # @yieldreturn [#valid? or #decrypt] The signature validator if the token is
-  #   signed, or the token decrypter if the token is encrypted.
-  # @return [Hash or String] The payload of the token as a Hash if it was JSON, 
-  #   otherwise as a String.
-  # @raise [Sandal::ClaimError] One or more claims in the token is invalid.
-  # @raise [Sandal::TokenError] The token format is invalid, or validation of 
-  #   the token failed.
+  # @yieldparam options [Hash] (Optional) A hash that can be used to override the default options.
+  # @yieldreturn [#valid? or #decrypt] The signature validator if the token is signed, or the token decrypter if the
+  #   token is encrypted.
+  # @return [Hash or String] The payload of the token as a Hash if it was JSON, otherwise as a String.
+  # @raise [Sandal::TokenError] The token is invalid or not supported.
   def self.decode_token(token, depth = 16)
     parts = token.split('.')
     decoded_parts = decode_token_parts(parts)

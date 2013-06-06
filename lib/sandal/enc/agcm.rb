@@ -8,41 +8,53 @@ module Sandal
     class AGCM
       include Sandal::Util
 
+      @@iv_size = 96
+      @@auth_tag_size = 128
+
       # The JWA name of the encryption method.
       attr_reader :name
 
       # The JWA algorithm used to encrypt the content encryption key.
       attr_reader :alg
 
-      # The size of key needed for the algorithm, in bits.
-      attr_reader :key_size
-
+      # Initialises a new instance; it's probably easier to use one of the subclass constructors.
+      #
+      # @param aes_size [Integer] The size of the AES algorithm, in bits.
+      # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(aes_size, alg)
         @aes_size = aes_size
-        @key_size = aes_size
         @name = "A#{aes_size}GCM"
         @cipher_name = "aes-#{aes_size}-gcm"
         @alg = alg
       end
 
+      # Encrypts a token payload.
+      #
+      # @param header [String] The header string.
+      # @param payload [String] The payload.
+      # @return [String] An encrypted JSON Web Token.
       def encrypt(header, payload)
         cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
-        key = @alg.respond_to?(:direct_key) ? @alg.direct_key : cipher.random_key
+        key = @alg.respond_to?(:preshared_key) ? @alg.preshared_key : cipher.random_key
         encrypted_key = @alg.encrypt_key(key)
 
         cipher.key = key
-        iv = cipher.random_iv
+        cipher.iv = iv = SecureRandom.random_bytes(@@iv_size / 8)
 
         auth_parts = [header, encrypted_key]
-        auth_data = auth_parts.map { |part| jwt_base64_encode(part) }.join('.')
+        auth_data = auth_parts.map { |part| jwt_base64_encode(part) }.join(".")
         cipher.auth_data  = auth_data
 
         ciphertext = cipher.update(payload) + cipher.final
-        remaining_parts = [iv, ciphertext, cipher.auth_tag]
+        remaining_parts = [iv, ciphertext, cipher.auth_tag(@@auth_tag_size / 8)]
         remaining_parts.map! { |part| jwt_base64_encode(part) }
-        [auth_data, *remaining_parts].join('.')
+        [auth_data, *remaining_parts].join(".")
       end
 
+      # Decrypts an encrypted JSON Web Token.
+      #
+      # @param token [String or Array] The token, or token parts, to decrypt.
+      # @return [String] The token payload.
       def decrypt(token)
         parts, decoded_parts = Sandal::Enc.token_parts(token)
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
@@ -52,8 +64,8 @@ module Sandal
           cipher.auth_tag = decoded_parts[4]
           cipher.auth_data = parts.take(2).join('.')
           cipher.update(decoded_parts[3]) + cipher.final
-        rescue OpenSSL::Cipher::CipherError
-          raise Sandal::InvalidTokenError, 'Cannot decrypt token.'
+        rescue OpenSSL::Cipher::CipherError => e
+          raise Sandal::InvalidTokenError, "Cannot decrypt token: #{e.message}"
         end
       end
 
@@ -65,9 +77,13 @@ module Sandal
       # The size of key that is required, in bits.
       KEY_SIZE = 128
 
-      def initialize(key)
-        super(KEY_SIZE, key)
+      # Initialises a new instance.
+      #
+      # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
+      def initialize(alg)
+        super(KEY_SIZE, alg)
       end
+
     end
 
     # The A256GCM encryption method.
@@ -76,9 +92,13 @@ module Sandal
       # The size of key that is required, in bits.
       KEY_SIZE = 256
 
-      def initialize(key)
-        super(KEY_SIZE, key)
+      # Initialises a new instance.
+      #
+      # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
+      def initialize(alg)
+        super(KEY_SIZE, alg)
       end
+
     end
 
   end
