@@ -6,27 +6,27 @@ shared_examples "signing and validation" do |enc_class|
   it "can sign data and validate signatures" do
     data = "this is my data"
     private_key = OpenSSL::PKey::RSA.generate(2048)
-    signer = Sandal::Sig::RS384.new(private_key)
+    signer = enc_class.new(private_key)
     signature = signer.sign(data)
-    validator = Sandal::Sig::RS384.new(private_key.public_key)
+    validator = enc_class.new(private_key.public_key)
     validator.valid?(signature, data).should == true
   end
 
   it "can use DER-encoded keys to sign data and validate signatures" do
     data = "there are many like it"
     private_key = OpenSSL::PKey::RSA.generate(2048)
-    signer = Sandal::Sig::RS384.new(private_key.to_der)
+    signer = enc_class.new(private_key.to_der)
     signature = signer.sign(data)
-    validator = Sandal::Sig::RS384.new(private_key.public_key.to_der)
+    validator = enc_class.new(private_key.public_key.to_der)
     validator.valid?(signature, data).should == true
   end
 
   it "can use PEM-encoded keys to sign data and validate signatures" do
     data = "but this one is mine"
     private_key = OpenSSL::PKey::RSA.generate(2048)
-    signer = Sandal::Sig::RS384.new(private_key.to_pem)
+    signer = enc_class.new(private_key.to_pem)
     signature = signer.sign(data)
-    validator = Sandal::Sig::RS384.new(private_key.public_key.to_pem)
+    validator = enc_class.new(private_key.public_key.to_pem)
     validator.valid?(signature, data).should == true
   end
 
@@ -34,27 +34,27 @@ shared_examples "signing and validation" do |enc_class|
 
     it "fails to validate the signature when the key is changed" do
       data = "this is my data"
-      signer = Sandal::Sig::RS384.new(OpenSSL::PKey::RSA.generate(2048))
+      signer = enc_class.new(OpenSSL::PKey::RSA.generate(2048))
       signature = signer.sign(data)
-      validator = Sandal::Sig::RS384.new(OpenSSL::PKey::RSA.generate(2048).public_key)
+      validator = enc_class.new(OpenSSL::PKey::RSA.generate(2048).public_key)
       validator.valid?(signature, data).should == false
     end
 
     it "fails to validate the signature when the signature is changed" do
       data = "this is my data"
       private_key = OpenSSL::PKey::RSA.generate(2048)
-      signer = Sandal::Sig::RS384.new(private_key)
+      signer = enc_class.new(private_key)
       signature = signer.sign(data)
-      validator = Sandal::Sig::RS384.new(private_key.public_key)
+      validator = enc_class.new(private_key.public_key)
       validator.valid?(signature + "x", data).should == false
     end
 
     it "fails to validate the signature when the data is changed" do
       data = "this is my data"
       private_key = OpenSSL::PKey::RSA.generate(2048)
-      signer = Sandal::Sig::RS384.new(private_key)
+      signer = enc_class.new(private_key)
       signature = signer.sign(data)
-      validator = Sandal::Sig::RS384.new(private_key.public_key)
+      validator = enc_class.new(private_key.public_key)
       validator.valid?(signature, data + "x").should == false
     end
 

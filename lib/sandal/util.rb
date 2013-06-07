@@ -1,4 +1,4 @@
-require 'base64'
+require "base64"
 
 module Sandal
   # @private
@@ -30,7 +30,7 @@ module Sandal
     # @param s [String] The string to encode.
     # @return [String] The encoded base64 string.
     def jwt_base64_encode(s)
-      Base64.urlsafe_encode64(s).gsub(/=+$/, '')
+      Base64.urlsafe_encode64(s).gsub(/=+$/, "")
     end
 
     # Base64 decodes a string, in compliance with the JWT specification.
@@ -39,21 +39,21 @@ module Sandal
     # @return [String] The decoded string.
     # @raise [ArgumentError] The base64 string is invalid or contains padding.
     def jwt_base64_decode(s)
-      if s.end_with?('=')
-        raise ArgumentError, 'Base64 strings must not contain padding.'
+      if s.end_with?("=")
+        raise ArgumentError, "Base64 strings must not contain padding."
       end
 
       padding_length = (4 - (s.length % 4)) % 4
-      padding = '=' * padding_length
+      padding = "=" * padding_length
       input = s + padding
       result = Base64.urlsafe_decode64(input)
 
-      # this bit is primarily for jruby which does a 'best effort' decode of
+      # this bit is primarily for jruby which does a "best effort" decode of
       # whatever data it can if the input is invalid rather than raising an
       # ArgumentError - as that could be a security issue we'll check that the 
       # result contains all the data that was in the input string
       unless input.length == (((result.length - 1) / 3) * 4) + 4
-        raise ArgumentError, 'Invalid base64.'
+        raise ArgumentError, "Invalid base64."
       end
       
       result

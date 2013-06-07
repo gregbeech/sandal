@@ -1,5 +1,5 @@
-require 'openssl'
-require 'sandal/util'
+require "openssl"
+require "sandal/util"
 
 module Sandal
   module Enc
@@ -21,9 +21,9 @@ module Sandal
       #
       # @param aes_size [Integer] The size of the AES algorithm, in bits.
       # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
-      def initialize(aes_size, alg)
+      def initialize(name, aes_size, alg)
+        @name = name
         @aes_size = aes_size
-        @name = self.class::NAME
         @cipher_name = "aes-#{aes_size}-gcm"
         @alg = alg
       end
@@ -41,12 +41,11 @@ module Sandal
         cipher.key = key
         cipher.iv = iv = SecureRandom.random_bytes(@@iv_size / 8)
 
-        auth_parts = [header, encrypted_key]
-        auth_data = auth_parts.map { |part| jwt_base64_encode(part) }.join(".")
+        auth_data = jwt_base64_encode(header)
         cipher.auth_data  = auth_data
 
         ciphertext = cipher.update(payload) + cipher.final
-        remaining_parts = [iv, ciphertext, cipher.auth_tag(@@auth_tag_size / 8)]
+        remaining_parts = [encrypted_key, iv, ciphertext, cipher.auth_tag(@@auth_tag_size / 8)]
         remaining_parts.map! { |part| jwt_base64_encode(part) }
         [auth_data, *remaining_parts].join(".")
       end
@@ -62,7 +61,7 @@ module Sandal
           cipher.key = @alg.decrypt_key(decoded_parts[1])
           cipher.iv = decoded_parts[2]
           cipher.auth_tag = decoded_parts[4]
-          cipher.auth_data = parts.take(2).join('.')
+          cipher.auth_data = parts[0]
           cipher.update(decoded_parts[3]) + cipher.final
         rescue OpenSSL::Cipher::CipherError => e
           raise Sandal::InvalidTokenError, "Cannot decrypt token: #{e.message}"
@@ -84,7 +83,7 @@ module Sandal
       #
       # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(alg)
-        super(KEY_SIZE, alg)
+        super(NAME, KEY_SIZE, alg)
       end
 
     end
@@ -102,7 +101,7 @@ module Sandal
       #
       # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(alg)
-        super(KEY_SIZE, alg)
+        super(NAME, KEY_SIZE, alg)
       end
 
     end

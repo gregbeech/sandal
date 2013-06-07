@@ -1,5 +1,5 @@
-require 'openssl'
-require 'sandal/util'
+require "openssl"
+require "sandal/util"
 
 module Sandal
   module Enc
@@ -7,8 +7,6 @@ module Sandal
     # Base implementation of the A*CBC-HS* family of encryption methods.
     class ACBC_HS
       include Sandal::Util
-
-      @@iv_size = 128
 
       # The JWA name of the encryption method.
       attr_reader :name
@@ -18,13 +16,14 @@ module Sandal
 
       # Initialises a new instance; it's probably easier to use one of the subclass constructors.
       #
+      # @param name [String] The JWA name of the encryption method.
       # @param aes_size [Integer] The size of the AES algorithm, in bits.
       # @param sha_size [Integer] The size of the SHA algorithm, in bits.
       # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
-      def initialize(aes_size, sha_size, alg)
+      def initialize(name, aes_size, sha_size, alg)
+        @name = name
         @aes_size = aes_size
         @sha_size = sha_size
-        @name = self.class::NAME
         @cipher_name = "aes-#{aes_size}-cbc"
         @alg = alg
         @digest = OpenSSL::Digest.new("sha#{@sha_size}")
@@ -42,17 +41,17 @@ module Sandal
 
         cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
         cipher.key = enc_key
-        cipher.iv = iv = SecureRandom.random_bytes(@@iv_size / 8)
+        cipher.iv = iv = SecureRandom.random_bytes(16)
         ciphertext = cipher.update(payload) + cipher.final
 
-        auth_data = [header, encrypted_key].map { |part| jwt_base64_encode(part) }.join(".")
+        auth_data = jwt_base64_encode(header)
         auth_data_length = [auth_data.length * 8].pack("Q>")
         mac_input = [auth_data, iv, ciphertext, auth_data_length].join
         mac = OpenSSL::HMAC.digest(@digest, mac_key, mac_input)
         auth_tag = mac[0...(mac.length / 2)]
 
-        remainder = [iv, ciphertext, auth_tag].map { |part| jwt_base64_encode(part) }.join(".")
-        [auth_data, remainder].join(".")
+        remainder = [encrypted_key, iv, ciphertext, auth_tag].map { |part| jwt_base64_encode(part) }
+        [auth_data, *remainder].join(".")
       end
 
       # Decrypts an encrypted JSON Web Token.
@@ -66,8 +65,8 @@ module Sandal
         key = @alg.decrypt_key(encrypted_key)
         mac_key, enc_key = derive_keys(key)
 
-        auth_data = parts.take(2).join('.')
-        auth_data_length = [auth_data.length * 8].pack('Q>')
+        auth_data = parts[0]
+        auth_data_length = [auth_data.length * 8].pack("Q>")
         mac_input = [auth_data, iv, ciphertext, auth_data_length].join
         mac = OpenSSL::HMAC.digest(@digest, mac_key, mac_input)
         unless auth_tag == mac[0...(mac.length / 2)]
@@ -123,7 +122,7 @@ module Sandal
       #
       # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(alg)
-        super(KEY_SIZE / 2, KEY_SIZE, alg)
+        super(NAME, KEY_SIZE / 2, KEY_SIZE, alg)
       end
 
     end
@@ -141,7 +140,7 @@ module Sandal
       #
       # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
       def initialize(alg)
-        super(KEY_SIZE / 2, KEY_SIZE, alg)
+        super(NAME, KEY_SIZE / 2, KEY_SIZE, alg)
       end
 
     end

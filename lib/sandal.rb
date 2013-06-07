@@ -1,11 +1,11 @@
-require 'multi_json'
-require 'openssl'
-require 'zlib'
-require 'sandal/version'
-require 'sandal/claims'
-require 'sandal/enc'
-require 'sandal/sig'
-require 'sandal/util'
+require "multi_json"
+require "openssl"
+require "zlib"
+require "sandal/version"
+require "sandal/claims"
+require "sandal/enc"
+require "sandal/sig"
+require "sandal/util"
 
 
 # A library for creating and reading JSON Web Tokens (JWT), supporting JSON Web Signatures (JWS) and JSON Web Encryption
@@ -78,7 +78,7 @@ module Sandal
   # @return [Boolean] true if the token is encrypted; otherwise false.
   def self.is_encrypted?(token)
     if token.is_a?(String)
-      token.count('.') == 4
+      token.count(".") == 4
     else
       token.count == 5
     end
@@ -90,7 +90,7 @@ module Sandal
   # @return [Boolean] true if the token is signed; otherwise false.
   def self.is_signed?(token)
     if token.is_a?(String)
-      !token.end_with?('.') && token.count('.') == 2
+      !token.end_with?(".") && token.count(".") == 2
     else
       token.count == 3 && !token[2].nil? && !token[2].empty?
     end
@@ -100,38 +100,38 @@ module Sandal
   #
   # @param payload [String or Hash] The payload of the token. Hashes will be encoded as JSON.
   # @param signer [#name,#sign] The token signer, which may be nil for an unsigned token.
-  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg').
+  # @param header_fields [Hash] Header fields for the token (note: do not include "alg").
   # @return [String] A signed JSON Web Token.
   def self.encode_token(payload, signer, header_fields = nil)
     signer ||= Sandal::Sig::NONE
 
     header = {}
-    header['alg'] = signer.name
+    header["alg"] = signer.name
     header = header_fields.merge(header) if header_fields
     header = MultiJson.dump(header)
 
     payload = MultiJson.dump(payload) unless payload.is_a?(String)
 
-    sec_input = [header, payload].map { |p| jwt_base64_encode(p) }.join('.')
+    sec_input = [header, payload].map { |p| jwt_base64_encode(p) }.join(".")
     signature = signer.sign(sec_input)
-    [sec_input, jwt_base64_encode(signature)].join('.')
+    [sec_input, jwt_base64_encode(signature)].join(".")
   end
 
   # Creates an encrypted JSON Web Token.
   #
   # @param payload [String] The payload of the token.
   # @param encrypter [#name,#alg,#encrypt] The token encrypter.
-  # @param header_fields [Hash] Header fields for the token (note: do not include 'alg' or 'enc').
+  # @param header_fields [Hash] Header fields for the token (note: do not include "alg" or "enc").
   # @return [String] An encrypted JSON Web Token.
   def self.encrypt_token(payload, encrypter, header_fields = nil)
     header = {}
-    header['enc'] = encrypter.name
-    header['alg'] = encrypter.alg.name
+    header["enc"] = encrypter.name
+    header["alg"] = encrypter.alg.name
     header = header_fields.merge(header) if header_fields
 
-    if header.has_key?('zip')
-      unless header['zip'] == 'DEF'
-        raise ArgumentError, 'Invalid zip algorithm.'
+    if header.has_key?("zip")
+      unless header["zip"] == "DEF"
+        raise ArgumentError, "Invalid zip algorithm."
       end
       payload = Zlib::Deflate.deflate(payload, Zlib::BEST_COMPRESSION)
     end 
@@ -156,7 +156,7 @@ module Sandal
   # @return [Hash or String] The payload of the token as a Hash if it was JSON, otherwise as a String.
   # @raise [Sandal::TokenError] The token is invalid or not supported.
   def self.decode_token(token, depth = 16)
-    parts = token.split('.')
+    parts = token.split(".")
     decoded_parts = decode_token_parts(parts)
     header = decoded_parts[0]
 
@@ -165,9 +165,9 @@ module Sandal
 
     if is_encrypted?(parts)
       payload = decoder.decrypt(parts)
-      if header.has_key?('zip')
-        unless header['zip'] == 'DEF'
-          raise Sandal::InvalidTokenError, 'Invalid zip algorithm.'
+      if header.has_key?("zip")
+        unless header["zip"] == "DEF"
+          raise Sandal::InvalidTokenError, "Invalid zip algorithm."
         end
         payload = Zlib::Inflate.inflate(payload)
       end
@@ -178,7 +178,7 @@ module Sandal
       end
     end
 
-    if header['cty'] == 'JWT'
+    if header["cty"] == "JWT"
       if depth > 0
         if block_given?
           decode_token(payload, depth - 1, &Proc.new)
@@ -198,9 +198,9 @@ module Sandal
   # Decodes and validates a signed JSON Web Token.
   def self.validate_signature(parts, signature, validator)
     validator ||= Sandal::Sig::NONE
-    secured_input = parts.take(2).join('.')
+    secured_input = parts.take(2).join(".")
     unless validator.valid?(signature, secured_input)
-      raise TokenError, 'Invalid signature.'
+      raise TokenError, "Invalid signature."
     end
   end
 
@@ -210,7 +210,7 @@ module Sandal
     parts[0] = MultiJson.load(parts[0])
     parts
   rescue
-    raise TokenError, 'Invalid token encoding.'
+    raise TokenError, "Invalid token encoding."
   end
 
   # Parses the content of a token and validates the claims if is JSON claims.

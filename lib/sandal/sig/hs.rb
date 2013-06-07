@@ -1,4 +1,4 @@
-require 'openssl'
+require "openssl"
 
 module Sandal
   module Sig
@@ -7,16 +7,17 @@ module Sandal
     class HS
       include Sandal::Util
 
-      # @return [String] The JWA name of the algorithm.
+      # The JWA name of the algorithm.
       attr_reader :name
 
       # Creates a new instance; it's probably easier to use one of the subclass
       # constructors.
       #
+      # @oaram name [String] The JWA name of the algorithm.
       # @param sha_size [Integer] The size of the SHA algorithm.
       # @param key [String] The key to use for signing or validation.
-      def initialize(sha_size, key)
-        @name = self.class::NAME
+      def initialize(name, sha_size, key)
+        @name = name
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @key = key
       end
@@ -50,7 +51,7 @@ module Sandal
       #
       # @param key [String] The key to use for signing or validation.
       def initialize(key)
-        super(256, key)
+        super(NAME, 256, key)
       end
     end
 
@@ -64,7 +65,7 @@ module Sandal
       #
       # @param key [String] The key to use for signing or validation.
       def initialize(key)
-        super(384, key)
+        super(NAME, 384, key)
       end
     end
 
@@ -78,7 +79,7 @@ module Sandal
       #
       # @param key [String] The key to use for signing or validation.
       def initialize(key)
-        super(512, key)
+        super(NAME, 512, key)
       end
     end
 

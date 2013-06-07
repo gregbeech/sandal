@@ -10,9 +10,6 @@ module Sandal
         # The JWA name of the algorithm.
         NAME = "dir"
 
-        # @return [String] The JWA name of the algorithm.
-        attr_reader :name
-
         # @return [String] The pre-shared symmetric key.
         attr_reader :preshared_key
 
@@ -20,8 +17,12 @@ module Sandal
         #
         # @param preshared_key [String] The pre-shared symmetric key.
         def initialize(preshared_key)
-          @name = NAME
           @preshared_key = preshared_key
+        end
+
+        # The JWA name of the algorithm.
+        def name
+          NAME
         end
 
         # Returns an empty string as the key is not included in JWE tokens using direct key exchange.

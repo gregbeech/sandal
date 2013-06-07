@@ -13,6 +13,22 @@ describe Sandal::Enc::Alg::RSA_OAEP do
     decrypter.decrypt_key(encrypter.encrypt_key(key)).should == key
   end
 
+  it "can use DER-encoded keys to encrypt and decrypt a content master key" do
+    key = OpenSSL::PKey::RSA.new(2048)
+    encrypter = Sandal::Enc::Alg::RSA_OAEP.new(key.public_key.to_der)
+    decrypter = Sandal::Enc::Alg::RSA_OAEP.new(key.to_der)
+    key = "an encryption key"
+    decrypter.decrypt_key(encrypter.encrypt_key(key)).should == key
+  end
+
+  it "can use PEM-encoded keys to encrypt and decrypt a content master key" do
+    key = OpenSSL::PKey::RSA.new(2048)
+    encrypter = Sandal::Enc::Alg::RSA_OAEP.new(key.public_key.to_pem)
+    decrypter = Sandal::Enc::Alg::RSA_OAEP.new(key.to_pem)
+    key = "an encryption key"
+    decrypter.decrypt_key(encrypter.encrypt_key(key)).should == key
+  end
+
   context "#name" do
     it "is 'RSA-OAEP'" do
       alg = Sandal::Enc::Alg::RSA_OAEP.new(OpenSSL::PKey::RSA.new(2048))

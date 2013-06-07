@@ -3,7 +3,7 @@ require "openssl"
 
 include Sandal::Util
 
-# EC isn"t implemented in jruby-openssl at the moment
+# EC isn't implemented in jruby-openssl at the moment
 if defined? Sandal::Sig::ES
 
 def make_point(group, x, y)

@@ -1,4 +1,4 @@
-require 'openssl'
+require "openssl"
 
 module Sandal
   module Sig
@@ -6,17 +6,18 @@ module Sandal
     # Base implementation of the ECDSA-SHA family of signature algorithms.
     class ES
 
-      # @return [String] The JWA name of the algorithm.
+      # The JWA name of the algorithm.
       attr_reader :name
 
       # Creates a new instance; it's probably easier to use one of the subclass
       # constructors.
       #
+      # @oaram name [String] The JWA name of the algorithm.
       # @param sha_size [Integer] The size of the SHA algorithm.
       # @param prime_size [Integer] The size of the ECDSA primes.
       # @param key [OpenSSL::PKey::EC] The key to use for signing (private) or validation (public).
-      def initialize(sha_size, prime_size, key)
-        @name = self.class::NAME
+      def initialize(name, sha_size, prime_size, key)
+        @name = name
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @prime_size = prime_size
         @key = key
@@ -56,8 +57,8 @@ module Sandal
 
       # Encodes a pair of BNs into an ASN.1 signature.
       #
-      # @param r [OpenSSL::BN] The 'r' value.
-      # @param s [OpenSSL::BN] The 's' value.
+      # @param r [OpenSSL::BN] The "r" value.
+      # @param s [OpenSSL::BN] The "s" value.
       # @return [String] The ASN.1 signature.
       def self.encode_asn1_signature(r, s)
         items = [OpenSSL::ASN1::Integer.new(r), OpenSSL::ASN1::Integer.new(s)]
@@ -70,7 +71,7 @@ module Sandal
       # @return [OpenSSL::BN, OpenSSL::BN] A pair of BNs.
       def self.decode_jws_signature(signature)
         n_length = signature.length / 2
-        s_to_n = -> s { OpenSSL::BN.new(s.unpack('H*')[0], 16) }
+        s_to_n = -> s { OpenSSL::BN.new(s.unpack("H*")[0], 16) }
         r = s_to_n.call(signature[0..(n_length - 1)])
         s = s_to_n.call(signature[n_length..-1])
         return r, s
@@ -78,13 +79,13 @@ module Sandal
 
       # Encodes a pair of BNs into a JWS signature.
       #
-      # @param r [OpenSSL::BN] The 'r' value.
-      # @param s [OpenSSL::BN] The 's' value.
+      # @param r [OpenSSL::BN] The "r" value.
+      # @param s [OpenSSL::BN] The "s" value.
       # @param prime_size [Integer] The size of the ECDSA primes.
       # @return [String] The ASN.1 signature.
       def self.encode_jws_signature(r, s, prime_size)
         byte_count = (prime_size / 8.0).ceil
-        n_to_s = -> n { [n.to_s(16)].pack('H*').rjust(byte_count, "\0") }
+        n_to_s = -> n { [n.to_s(16)].pack("H*").rjust(byte_count, "\0") }
         n_to_s.call(r) + n_to_s.call(s)
       end
 
@@ -121,7 +122,7 @@ module Sandal
       #   value is a String then it will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "prime256v1" group.
       def initialize(key)
-        super(256, 256, make_key(key, CURVE_NAME))
+        super(NAME, 256, 256, make_key(key, CURVE_NAME))
       end
     end
 
@@ -140,7 +141,7 @@ module Sandal
       #   value is a String then it will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "secp384r1" group.
       def initialize(key)
-        super(384, 384, make_key(key, CURVE_NAME))
+        super(NAME, 384, 384, make_key(key, CURVE_NAME))
       end
     end
 
@@ -159,7 +160,7 @@ module Sandal
       #   value is a String then it will be passed to the constructor of the EC class.
       # @raise [ArgumentError] The key is not in the "secp521r1" group.
       def initialize(key)
-        super(512, 521, make_key(key, CURVE_NAME))
+        super(NAME, 512, 521, make_key(key, CURVE_NAME))
       end
     end
 

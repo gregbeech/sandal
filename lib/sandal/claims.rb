@@ -21,14 +21,14 @@ module Sandal
     #
     # @param max_clock_skew [Numeric] The maximum clock skew, in seconds.
     # @return [void].
-    # @raise [Sandal::ClaimError] The 'exp' claim is invalid, or the token has 
+    # @raise [Sandal::ClaimError] The "exp" claim is invalid, or the token has 
     #   expired.
     def validate_exp(max_clock_skew = 0)
       max_clock_skew ||= 0
 
-      exp = time_claim('exp')
+      exp = time_claim("exp")
       if exp && exp <= (Time.now - max_clock_skew)
-        raise Sandal::ExpiredTokenError, 'The token has expired.' 
+        raise Sandal::ExpiredTokenError, "The token has expired." 
       end
     end
 
@@ -36,14 +36,14 @@ module Sandal
     #
     # @param max_clock_skew [Numeric] The maximum clock skew, in seconds.
     # @return [void].
-    # @raise [Sandal::ClaimError] The 'nbf' claim is invalid, or the token is 
+    # @raise [Sandal::ClaimError] The "nbf" claim is invalid, or the token is 
     #   not valid yet.
     def validate_nbf(max_clock_skew = 0)
       max_clock_skew ||= 0
 
-      nbf = time_claim('nbf')
+      nbf = time_claim("nbf")
       if nbf && nbf > (Time.now + max_clock_skew)
-        raise Sandal::ClaimError, 'The token is not valid yet.'
+        raise Sandal::ClaimError, "The token is not valid yet."
       end
     end
 
@@ -51,12 +51,12 @@ module Sandal
     #
     # @param valid_iss [Array] The valid issuers.
     # @return [void].
-    # @raise [Sandal::ClaimError] The 'iss' claim value is not a valid issuer.
+    # @raise [Sandal::ClaimError] The "iss" claim value is not a valid issuer.
     def validate_iss(valid_iss)
       return unless valid_iss && valid_iss.length > 0
 
-      unless valid_iss.include?(self['iss'])
-        raise Sandal::ClaimError, 'The issuer is invalid.'
+      unless valid_iss.include?(self["iss"])
+        raise Sandal::ClaimError, "The issuer is invalid."
       end
     end
 
@@ -64,15 +64,15 @@ module Sandal
     #
     # @param valid_aud [Array] The valid audiences.
     # @return [void].
-    # @raise [Sandal::ClaimError] The 'aud' claim value does not contain a valid
+    # @raise [Sandal::ClaimError] The "aud" claim value does not contain a valid
     #   audience.
     def validate_aud(valid_aud)
       return unless valid_aud && valid_aud.length > 0
 
-      aud = self['aud']
+      aud = self["aud"]
       aud = [aud] unless aud.is_a?(Array)
       unless (aud & valid_aud).length > 0
-        raise Sandal::ClaimError, 'The audence is invalid.'
+        raise Sandal::ClaimError, "The audence is invalid."
       end
     end
 
@@ -85,7 +85,7 @@ module Sandal
         begin
           Time.at(claim)
         rescue
-          raise Sandal::ClaimError, "The '#{name}' claim is invalid."
+          raise Sandal::ClaimError, "The "#{name}" claim is invalid."
         end
       end
     end
