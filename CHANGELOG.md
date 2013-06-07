@@ -1,3 +1,17 @@
+## 0.5.0
+
+Features:
+
+- Updated to JWT draft-08 specification, and corresponding JWE, JWS and JWA drafts.
+- Added a KeyError class for when invalid keys are given to the library.
+- Added an ExpiredTokenError class to make handling the common case of expired tokens easier.
+- Added a NAME constant to all classes with a JWA name to save user having to hard-code the name string.
+
+Breaking changes:
+
+- Tokens are not backwards compatible with previous versions of the library due to changes in the specification.
+- Dropped support for Ruby 1.9.2; supported platforms are now 1.9.3, 2.0.0, JRuby (head) and Rubinius (head).
+
 ## 0.4.0 (30 April 2013)
 
 Features:

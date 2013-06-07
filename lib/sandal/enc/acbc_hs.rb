@@ -1,103 +1,148 @@
-require 'openssl'
-require 'sandal/util'
+require "openssl"
+require "sandal/util"
 
 module Sandal
   module Enc
 
-    # Base implementation of the AES/CBC+HMAC-SHA family of encryption 
-    # algorithms.
+    # Base implementation of the A*CBC-HS* family of encryption methods.
     class ACBC_HS
       include Sandal::Util
 
-      # The JWA name of the encryption.
+      # The JWA name of the encryption method.
       attr_reader :name
 
       # The JWA algorithm used to encrypt the content master key.
       attr_reader :alg
 
-      # Creates a new instance; it's probably easier to use one of the subclass 
-      # constructors.
+      # Initialises a new instance; it's probably easier to use one of the subclass constructors.
       #
-      # @param aes_size [Integer] The size of the AES algorithm.
-      # @param sha_size [Integer] The size of the SHA algorithm.
-      # @param alg [#name, #encrypt_cmk, #decrypt_cmk] The algorithm to use to 
-      #   encrypt and/or decrypt the AES key.
-      def initialize(aes_size, sha_size, alg)
+      # @param name [String] The JWA name of the encryption method.
+      # @param aes_size [Integer] The size of the AES algorithm, in bits.
+      # @param sha_size [Integer] The size of the SHA algorithm, in bits.
+      # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
+      def initialize(name, aes_size, sha_size, alg)
+        @name = name
         @aes_size = aes_size
         @sha_size = sha_size
-        @name = "A#{aes_size}CBC+HS#{@sha_size}"
         @cipher_name = "aes-#{aes_size}-cbc"
         @alg = alg
         @digest = OpenSSL::Digest.new("sha#{@sha_size}")
       end
 
+      # Encrypts a token payload.
+      #
+      # @param header [String] The header string.
+      # @param payload [String] The payload.
+      # @return [String] An encrypted JSON Web Token.
       def encrypt(header, payload)
-        cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
-        cmk = @alg.respond_to?(:cmk) ? @alg.cmk : cipher.random_key
-        encrypted_key = @alg.encrypt_cmk(cmk)
+        key = get_encryption_key
+        mac_key, enc_key = derive_keys(key)
+        encrypted_key = @alg.encrypt_key(key)
 
-        cipher.key = derive_encryption_key(cmk) 
-        iv = cipher.random_iv
+        cipher = OpenSSL::Cipher.new(@cipher_name).encrypt
+        cipher.key = enc_key
+        cipher.iv = iv = SecureRandom.random_bytes(16)
         ciphertext = cipher.update(payload) + cipher.final
 
-        sec_parts = [MultiJson.dump(header), encrypted_key, iv, ciphertext]
-        sec_input = sec_parts.map { |part| jwt_base64_encode(part) }.join('.')
-        cik = derive_integrity_key(cmk)
-        integrity_value = compute_integrity_value(cik, sec_input)
+        auth_data = jwt_base64_encode(header)
+        auth_data_length = [auth_data.length * 8].pack("Q>")
+        mac_input = [auth_data, iv, ciphertext, auth_data_length].join
+        mac = OpenSSL::HMAC.digest(@digest, mac_key, mac_input)
+        auth_tag = mac[0...(mac.length / 2)]
 
-        sec_input << '.' << jwt_base64_encode(integrity_value)
+        remainder = [encrypted_key, iv, ciphertext, auth_tag].map { |part| jwt_base64_encode(part) }
+        [auth_data, *remainder].join(".")
       end
 
-      def decrypt(parts, decoded_parts)
-        cmk = @alg.decrypt_cmk(decoded_parts[1])
-        
-        cik = derive_integrity_key(cmk)
-        integrity_value = compute_integrity_value(cik, parts.take(4).join('.'))
-        unless jwt_strings_equal?(decoded_parts[4], integrity_value)
-          raise Sandal::TokenError, 'Invalid integrity value.'
+      # Decrypts an encrypted JSON Web Token.
+      #
+      # @param token [String or Array] The token, or token parts, to decrypt.
+      # @return [String] The token payload.
+      def decrypt(token)
+        parts, decoded_parts = Sandal::Enc.token_parts(token)
+        header, encrypted_key, iv, ciphertext, auth_tag = *decoded_parts
+
+        key = @alg.decrypt_key(encrypted_key)
+        mac_key, enc_key = derive_keys(key)
+
+        auth_data = parts[0]
+        auth_data_length = [auth_data.length * 8].pack("Q>")
+        mac_input = [auth_data, iv, ciphertext, auth_data_length].join
+        mac = OpenSSL::HMAC.digest(@digest, mac_key, mac_input)
+        unless auth_tag == mac[0...(mac.length / 2)]
+          raise Sandal::InvalidTokenError, "Invalid authentication tag."
         end
 
         cipher = OpenSSL::Cipher.new(@cipher_name).decrypt
         begin
-          cipher.key = derive_encryption_key(cmk)
+          cipher.key = enc_key
           cipher.iv = decoded_parts[2]
           cipher.update(decoded_parts[3]) + cipher.final
-        rescue OpenSSL::Cipher::CipherError
-          raise Sandal::TokenError, 'Invalid token.'
+        rescue OpenSSL::Cipher::CipherError => e
+          raise Sandal::InvalidTokenError, "Cannot decrypt token: #{e.message}"
         end
       end
 
-    private
+      private
 
-      # Computes the integrity value.
-      def compute_integrity_value(cik, sec_input)
-        OpenSSL::HMAC.digest(@digest, cik, sec_input)
+      # Gets the key to use for mac and encryption
+      def get_encryption_key
+        key_bytes = @sha_size / 8
+        if @alg.respond_to?(:preshared_key)
+          key = @alg.preshared_key
+          unless key.size == key_bytes
+            raise Sandal::KeyError, "The pre-shared content key must be #{@sha_size} bits."
+          end
+          key
+        else
+          SecureRandom.random_bytes(key_bytes)
+        end
       end
 
-      # Derives the content encryption key from the content master key.
-      def derive_encryption_key(cmk)
-        Sandal::Enc.concat_kdf(@digest, cmk, @aes_size, @name, 0, 0, 'Encryption')
-      end
-
-      # Derives the content integrity key from the content master key.
-      def derive_integrity_key(cmk)
-        Sandal::Enc.concat_kdf(@digest, cmk, @sha_size, @name, 0, 0, 'Integrity')
+      # Derives the mac key and encryption key
+      def derive_keys(key)
+        derived_key_size = key.size / 2
+        mac_key = key[0...derived_key_size]
+        enc_key = key[derived_key_size..-1]
+        return mac_key, enc_key
       end
 
     end
 
-    # The AES-128-CBC+HMAC-SHA256 encryption algorithm.
+    # The A128CBC-HS256 encryption method.
     class A128CBC_HS256 < Sandal::Enc::ACBC_HS
-      def initialize(key)
-        super(128, 256, key)
+
+      # The JWA name of the algorithm.
+      NAME = "A128CBC-HS256"
+
+      # The size of key that is required, in bits.
+      KEY_SIZE = 256
+
+      # Initialises a new instance.
+      #
+      # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
+      def initialize(alg)
+        super(NAME, KEY_SIZE / 2, KEY_SIZE, alg)
       end
+
     end
 
-    # The AES-256-CBC+HMAC-SHA512 encryption algorithm.
+    # The A256CBC-HS512 encryption method.
     class A256CBC_HS512 < Sandal::Enc::ACBC_HS
-      def initialize(key)
-        super(256, 512, key)
+
+      # The JWA name of the algorithm.
+      NAME = "A256CBC-HS512"
+
+      # The size of key that is required, in bits.
+      KEY_SIZE = 512
+
+      # Initialises a new instance.
+      #
+      # @param alg [#name, #encrypt_key, #decrypt_key] The algorithm to use to encrypt and/or decrypt the AES key.
+      def initialize(alg)
+        super(NAME, KEY_SIZE / 2, KEY_SIZE, alg)
       end
+
     end
 
   end

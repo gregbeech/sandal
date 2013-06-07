@@ -1,6 +1,6 @@
 # Sandal [![Build Status](https://travis-ci.org/gregbeech/sandal.png?branch=master)](https://travis-ci.org/gregbeech/sandal) [![Coverage Status](https://coveralls.io/repos/gregbeech/sandal/badge.png?branch=master)](https://coveralls.io/r/gregbeech/sandal) [![Code Climate](https://codeclimate.com/github/gregbeech/sandal.png)](https://codeclimate.com/github/gregbeech/sandal) [![Dependency Status](https://gemnasium.com/gregbeech/sandal.png)](https://gemnasium.com/gregbeech/sandal)
 
-A Ruby library for creating and reading [JSON Web Tokens (JWT) draft-06](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-06), supporting [JSON Web Signatures (JWS) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-signature-08) and [JSON Web Encryption (JWE) draft-08](http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-08). See the [CHANGELOG](CHANGELOG.md) for version history.
+A Ruby library for creating and reading [JSON Web Tokens (JWT) draft-08](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-08), supporting [JSON Web Signatures (JWS) draft-11](http://tools.ietf.org/html/draft-ietf-jose-json-web-signature-11) and [JSON Web Encryption (JWE) draft-11](http://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-11). See the [CHANGELOG](CHANGELOG.md) for version history.
 
 ## Installation
 
