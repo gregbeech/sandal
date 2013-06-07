@@ -10,6 +10,7 @@ Features:
 Breaking changes:
 
 - Tokens are not backwards compatible with previous versions of the library due to changes in the specification.
+- Dropped support for Ruby 1.9.2; supported platforms are now 1.9.3, 2.0.0, JRuby (head) and Rubinius (head).
 
 ## 0.4.0 (30 April 2013)
 

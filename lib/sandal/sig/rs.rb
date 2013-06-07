@@ -37,6 +37,8 @@ module Sandal
       # @return [Boolean] true if the signature is correct; otherwise false.
       def valid?(signature, payload)
         @key.verify(@digest, signature, payload)
+      rescue OpenSSL::PKey::PKeyError # happens in jruby if the signature is invalid
+        false
       end
 
       private

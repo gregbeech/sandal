@@ -66,7 +66,7 @@ end
 describe Sandal::Sig::RS256 do
   include_examples "signing and validation", Sandal::Sig::RS256
 
-  it "can validate the signature from JWS dratf-11 appendix 2" do
+  it "can validate the signature from JWS dratf-11 appendix 2", :jruby_incompatible do
     data = "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ"
     private_key = SampleKeys.jws_draft11_appendix2_rsa
     signer = Sandal::Sig::RS384.new(private_key)
