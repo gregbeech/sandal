@@ -1,4 +1,4 @@
-require 'openssl'
+require "openssl"
 
 module Sandal
   module Sig
@@ -7,16 +7,17 @@ module Sandal
     class HS
       include Sandal::Util
 
-      # @return [String] The JWA name of the algorithm.
+      # The JWA name of the algorithm.
       attr_reader :name
 
       # Creates a new instance; it's probably easier to use one of the subclass
       # constructors.
       #
+      # @oaram name [String] The JWA name of the algorithm.
       # @param sha_size [Integer] The size of the SHA algorithm.
       # @param key [String] The key to use for signing or validation.
-      def initialize(sha_size, key)
-        @name = "HS#{sha_size}"
+      def initialize(name, sha_size, key)
+        @name = name
         @digest = OpenSSL::Digest.new("sha#{sha_size}")
         @key = key
       end
@@ -31,7 +32,7 @@ module Sandal
 
       # Validates a payload signature and returns whether the signature matches.
       #
-      # @param signature [String] The signature to verify.
+      # @param signature [String] The signature to validate.
       # @param payload [String] The payload of the token.
       # @return [Boolean] true if the signature is correct; otherwise false.
       def valid?(signature, payload)
@@ -42,31 +43,43 @@ module Sandal
 
     # The HMAC-SHA256 signing algorithm.
     class HS256 < Sandal::Sig::HS
+
+      # The JWA name of the algorithm.
+      NAME = "HS256"
+
       # Creates a new instance.
       #
       # @param key [String] The key to use for signing or validation.
       def initialize(key)
-        super(256, key)
+        super(NAME, 256, key)
       end
     end
 
     # The HMAC-SHA384 signing algorithm.
     class HS384 < Sandal::Sig::HS
+
+      # The JWA name of the algorithm.
+      NAME = "HS384"
+
       # Creates a new instance.
       #
       # @param key [String] The key to use for signing or validation.
       def initialize(key)
-        super(384, key)
+        super(NAME, 384, key)
       end
     end
 
     # The HMAC-SHA512 signing algorithm.
     class HS512 < Sandal::Sig::HS
+
+      # The JWA name of the algorithm.
+      NAME = "HS512"
+
       # Creates a new instance.
       #
       # @param key [String] The key to use for signing or validation.
       def initialize(key)
-        super(512, key)
+        super(NAME, 512, key)
       end
     end
 

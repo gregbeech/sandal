@@ -1,19 +1,19 @@
-require 'singleton'
+require "singleton"
 
 module Sandal
   # Contains signature (JWS) functionality.
   module Sig
 
-    # The 'none' JWA signature method.
+    # The "none" JWA signature method.
     class None
       include Singleton
 
-      # @return [String] The JWA name of the algorithm.
-      attr_reader :name
+      # The JWA name of the algorithm.
+      NAME = "none"
 
-      # Creates a new instance.
-      def initialize
-        @name = 'none'
+      # The JWA name of the algorithm.
+      def name
+        NAME
       end
 
       # Returns an empty signature.
@@ -21,12 +21,12 @@ module Sandal
       # @param payload [String] This parameter is ignored.
       # @return [String] An empty string.
       def sign(payload)
-        ''
+        ""
       end
 
       # Validates that a signature is nil or empty.
       #
-      # @param signature [String] The signature to verify.
+      # @param signature [String] The signature to validate.
       # @param payload [String] This parameter is ignored.
       # @return [Boolean] true if the signature is nil/empty; otherwise false.
       def valid?(signature, payload)
@@ -41,6 +41,6 @@ module Sandal
   end
 end
 
-require 'sandal/sig/es' unless RUBY_PLATFORM == 'java'
-require 'sandal/sig/hs'
-require 'sandal/sig/rs'
+require "sandal/sig/es" unless RUBY_PLATFORM == "java"
+require "sandal/sig/hs"
+require "sandal/sig/rs"

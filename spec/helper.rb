@@ -24,4 +24,5 @@ def make_bn(arr)
   OpenSSL::BN.new(hex_str, 16)
 end
 
+require_relative './sample_keys'
 require "#{File.dirname(__FILE__)}/../lib/sandal.rb"
