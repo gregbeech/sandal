@@ -1,8 +1,6 @@
 require "helper"
 require "openssl"
 
-include Sandal::Util
-
 shared_examples "encryption and decryption" do |enc_class|
 
   it "can encrypt and decrypt a content master key" do

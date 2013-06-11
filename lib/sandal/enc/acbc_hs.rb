@@ -6,7 +6,6 @@ module Sandal
 
     # Base implementation of the A*CBC-HS* family of encryption methods.
     class ACBC_HS
-      include Sandal::Util
 
       # The JWA name of the encryption method.
       attr_reader :name
@@ -44,13 +43,13 @@ module Sandal
         cipher.iv = iv = SecureRandom.random_bytes(16)
         ciphertext = cipher.update(payload) + cipher.final
 
-        auth_data = jwt_base64_encode(header)
+        auth_data = Sandal::Util.jwt_base64_encode(header)
         auth_data_length = [auth_data.length * 8].pack("Q>")
         mac_input = [auth_data, iv, ciphertext, auth_data_length].join
         mac = OpenSSL::HMAC.digest(@digest, mac_key, mac_input)
         auth_tag = mac[0...(mac.length / 2)]
 
-        remainder = [encrypted_key, iv, ciphertext, auth_tag].map { |part| jwt_base64_encode(part) }
+        remainder = [encrypted_key, iv, ciphertext, auth_tag].map { |part| Sandal::Util.jwt_base64_encode(part) }
         [auth_data, *remainder].join(".")
       end
 

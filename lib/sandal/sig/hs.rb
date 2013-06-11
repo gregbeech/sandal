@@ -5,7 +5,6 @@ module Sandal
 
     # Base implementation of the HMAC-SHA family of signature algorithms.
     class HS
-      include Sandal::Util
 
       # The JWA name of the algorithm.
       attr_reader :name
@@ -36,7 +35,7 @@ module Sandal
       # @param payload [String] The payload of the token.
       # @return [Boolean] true if the signature is correct; otherwise false.
       def valid?(signature, payload)
-        jwt_strings_equal?(sign(payload), signature)
+        Sandal::Util.jwt_strings_equal?(sign(payload), signature)
       end
 
     end
