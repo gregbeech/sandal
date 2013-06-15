@@ -111,9 +111,9 @@ module Sandal
 
     payload = MultiJson.dump(payload) unless payload.is_a?(String)
 
-    sec_input = [header, payload].map { |p| Sandal::Util.jwt_base64_encode(p) }.join(".")
+    sec_input = [header, payload].map { |p| Sandal::Util.base64_encode(p) }.join(".")
     signature = signer.sign(sec_input)
-    [sec_input, Sandal::Util.jwt_base64_encode(signature)].join(".")
+    [sec_input, Sandal::Util.base64_encode(signature)].join(".")
   end
 
   # Creates an encrypted JSON Web Token.
@@ -205,7 +205,7 @@ module Sandal
 
   # Decodes the parts of a token.
   def self.decode_token_parts(parts)
-    parts = parts.map { |part| Sandal::Util.jwt_base64_decode(part) }
+    parts = parts.map { |part| Sandal::Util.base64_decode(part) }
     parts[0] = MultiJson.load(parts[0])
     parts
   rescue

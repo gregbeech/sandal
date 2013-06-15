@@ -1,3 +1,15 @@
+## 0.6.0
+
+Breaking changes:
+
+- The Util method names have now dropped the jwt_ prefix which was somewhat unnecessary.
+
+## 0.5.1 (11 June 2013)
+
+Bug fixes:
+
+- Referenced the Util methods using the class name rather than by importing them, as the method name resolution was unreliable under Rack, and problems weren't being detected by tests.
+
 ## 0.5.0 (07 June 2013)
 
 Features:

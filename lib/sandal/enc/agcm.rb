@@ -40,12 +40,12 @@ module Sandal
         cipher.key = key
         cipher.iv = iv = SecureRandom.random_bytes(@@iv_size / 8)
 
-        auth_data = Sandal::Util.jwt_base64_encode(header)
+        auth_data = Sandal::Util.base64_encode(header)
         cipher.auth_data  = auth_data
 
         ciphertext = cipher.update(payload) + cipher.final
         remaining_parts = [encrypted_key, iv, ciphertext, cipher.auth_tag(@@auth_tag_size / 8)]
-        remaining_parts.map! { |part| Sandal::Util.jwt_base64_encode(part) }
+        remaining_parts.map! { |part| Sandal::Util.base64_encode(part) }
         [auth_data, *remaining_parts].join(".")
       end
 
