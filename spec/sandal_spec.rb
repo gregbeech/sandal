@@ -1,6 +1,5 @@
 require 'helper'
 require 'openssl'
-require 'multi_json'
 
 describe Sandal do
 

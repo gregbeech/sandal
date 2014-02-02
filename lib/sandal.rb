@@ -1,9 +1,9 @@
-require "multi_json"
 require "openssl"
 require "zlib"
 require "sandal/version"
 require "sandal/claims"
 require "sandal/enc"
+require "sandal/json"
 require "sandal/sig"
 require "sandal/util"
 
@@ -107,9 +107,9 @@ module Sandal
     header = {}
     header["alg"] = signer.name
     header = header_fields.merge(header) if header_fields
-    header = MultiJson.dump(header)
+    header = Sandal::Json.dump(header)
 
-    payload = MultiJson.dump(payload) unless payload.is_a?(String)
+    payload = Sandal::Json.dump(payload) unless payload.is_a?(String)
 
     sec_input = [header, payload].map { |p| Sandal::Util.jwt_base64_encode(p) }.join(".")
     signature = signer.sign(sec_input)
@@ -135,7 +135,7 @@ module Sandal
       payload = Zlib::Deflate.deflate(payload, Zlib::BEST_COMPRESSION)
     end 
 
-    encrypter.encrypt(MultiJson.dump(header), payload)
+    encrypter.encrypt(Sandal::Json.dump(header), payload)
   end
 
   # Decodes and validates a signed and/or encrypted JSON Web Token, recursing into any nested tokens, and returns the 
@@ -206,7 +206,7 @@ module Sandal
   # Decodes the parts of a token.
   def self.decode_token_parts(parts)
     parts = parts.map { |part| Sandal::Util.jwt_base64_decode(part) }
-    parts[0] = MultiJson.load(parts[0])
+    parts[0] = Sandal::Json.load(parts[0])
     parts
   rescue
     raise TokenError, "Invalid token encoding."
@@ -214,7 +214,7 @@ module Sandal
 
   # Parses the content of a token and validates the claims if is JSON claims.
   def self.parse_and_validate(payload, options)
-    claims = MultiJson.load(payload) rescue nil
+    claims = Sandal::Json.load(payload) rescue nil
     if claims
       claims.extend(Sandal::Claims).validate_claims(options)
     else

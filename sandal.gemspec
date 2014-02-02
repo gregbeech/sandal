@@ -17,7 +17,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.extra_rdoc_files = ["README.md", "LICENSE.md", "CHANGELOG.md"]
 
-  s.add_runtime_dependency "multi_json", "~> 1.7"
   s.add_runtime_dependency "jruby-openssl", "~> 0.7", ">= 0.7.3" if RUBY_PLATFORM == "java"
 
   s.add_development_dependency "bundler", ">= 1.3"
