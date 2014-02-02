@@ -9,7 +9,7 @@ shared_examples "signing and validation" do |enc_class|
     signer = enc_class.new(private_key)
     signature = signer.sign(data)
     validator = enc_class.new(private_key.public_key)
-    validator.valid?(signature, data).should == true
+    expect(validator.valid?(signature, data)).to eq(true)
   end
 
   it "can use DER-encoded keys to sign data and validate signatures" do
@@ -18,7 +18,7 @@ shared_examples "signing and validation" do |enc_class|
     signer = enc_class.new(private_key.to_der)
     signature = signer.sign(data)
     validator = enc_class.new(private_key.public_key.to_der)
-    validator.valid?(signature, data).should == true
+    expect(validator.valid?(signature, data)).to eq(true)
   end
 
   it "can use PEM-encoded keys to sign data and validate signatures" do
@@ -27,7 +27,7 @@ shared_examples "signing and validation" do |enc_class|
     signer = enc_class.new(private_key.to_pem)
     signature = signer.sign(data)
     validator = enc_class.new(private_key.public_key.to_pem)
-    validator.valid?(signature, data).should == true
+    expect(validator.valid?(signature, data)).to eq(true)
   end
 
   context "#valid?" do
@@ -37,7 +37,7 @@ shared_examples "signing and validation" do |enc_class|
       signer = enc_class.new(OpenSSL::PKey::RSA.generate(2048))
       signature = signer.sign(data)
       validator = enc_class.new(OpenSSL::PKey::RSA.generate(2048).public_key)
-      validator.valid?(signature, data).should == false
+      expect(validator.valid?(signature, data)).to eq(false)
     end
 
     it "fails to validate the signature when the signature is changed" do
@@ -46,7 +46,7 @@ shared_examples "signing and validation" do |enc_class|
       signer = enc_class.new(private_key)
       signature = signer.sign(data)
       validator = enc_class.new(private_key.public_key)
-      validator.valid?(signature + "x", data).should == false
+      expect(validator.valid?(signature + "x", data)).to eq(false)
     end
 
     it "fails to validate the signature when the data is changed" do
@@ -55,7 +55,7 @@ shared_examples "signing and validation" do |enc_class|
       signer = enc_class.new(private_key)
       signature = signer.sign(data)
       validator = enc_class.new(private_key.public_key)
-      validator.valid?(signature, data + "x").should == false
+      expect(validator.valid?(signature, data + "x")).to eq(false)
     end
 
   end
@@ -72,13 +72,13 @@ describe Sandal::Sig::RS256 do
     signer = Sandal::Sig::RS384.new(private_key)
     signature = signer.sign(data)
     validator = Sandal::Sig::RS384.new(private_key.public_key)
-    validator.valid?(signature, data).should == true
+    expect(validator.valid?(signature, data)).to eq(true)
   end 
 
   context "#name" do
     it "is 'RS256'" do
       enc = Sandal::Sig::RS256.new(OpenSSL::PKey::RSA.generate(2048))
-      enc.name.should == "RS256"
+      expect(enc.name).to eq("RS256")
     end
   end
 
@@ -90,7 +90,7 @@ describe Sandal::Sig::RS384 do
   context "#name" do
     it "is 'RS384'" do
       enc = Sandal::Sig::RS384.new(OpenSSL::PKey::RSA.generate(2048))
-      enc.name.should == "RS384"
+      expect(enc.name).to eq("RS384")
     end
   end
 
@@ -102,7 +102,7 @@ describe Sandal::Sig::RS512 do
   context "#name" do
     it "is 'RS512'" do
       enc = Sandal::Sig::RS512.new(OpenSSL::PKey::RSA.generate(2048))
-      enc.name.should == "RS512"
+      expect(enc.name).to eq("RS512")
     end
   end
   

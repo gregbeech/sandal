@@ -7,38 +7,38 @@ describe Sandal::Claims do
     it 'calls #validate_aud when valid audiences are provided' do
       claims = { 'aud' => 'example.org' }.extend(Sandal::Claims)
       valid_aud = %w(example.org)
-      claims.should_receive(:validate_aud).with(valid_aud)
+      expect(claims).to receive(:validate_aud).with(valid_aud)
       claims.validate_claims(valid_aud: valid_aud)
     end
 
     it 'calls #validate_exp by default' do
       claims = {}.extend(Sandal::Claims)
-      claims.should_receive(:validate_exp)
+      expect(claims).to receive(:validate_exp)
       claims.validate_claims
     end
 
     it 'does not call #validate_exp when the :ignore_exp option is set' do
       claims = {}.extend(Sandal::Claims)
-      claims.should_not_receive(:validate_exp)
+      expect(claims).not_to receive(:validate_exp)
       claims.validate_claims(ignore_exp: true)
     end
 
     it 'calls #validate_iss when valid issuers are provided' do
       claims = { 'iss' => 'example.org' }.extend(Sandal::Claims)
       valid_iss = %w(example.org)
-      claims.should_receive(:validate_iss).with(valid_iss)
+      expect(claims).to receive(:validate_iss).with(valid_iss)
       claims.validate_claims(valid_iss: valid_iss)
     end
 
     it 'calls #validate_nbf by default' do
       claims = {}.extend(Sandal::Claims)
-      claims.should_receive(:validate_nbf)
+      expect(claims).to receive(:validate_nbf)
       claims.validate_claims
     end
 
     it 'does not call #validate_nbf when the :ignore_nbf option is set' do
       claims = {}.extend(Sandal::Claims)
-      claims.should_not_receive(:validate_nbf)
+      expect(claims).not_to receive(:validate_nbf)
       claims.validate_claims(ignore_nbf: true)
     end
 

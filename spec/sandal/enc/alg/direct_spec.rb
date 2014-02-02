@@ -6,7 +6,7 @@ describe Sandal::Enc::Alg::Direct do
   context "#name" do
     it "is 'dir'" do
       alg = Sandal::Enc::Alg::Direct.new("some key")
-      alg.name.should == "dir"
+      expect(alg.name).to eq("dir")
     end
   end
 
@@ -14,14 +14,14 @@ describe Sandal::Enc::Alg::Direct do
     it "returns the pre-shared key" do
       key = "the pre-shared key"
       alg = Sandal::Enc::Alg::Direct.new(key)
-      alg.preshared_key.should == key
+      expect(alg.preshared_key).to eq(key)
     end
   end
 
   context "#encrypt_key" do
     it "returns an empty string" do
       alg = Sandal::Enc::Alg::Direct.new("the real key")
-      alg.encrypt_key("any value").should == ""
+      expect(alg.encrypt_key("any value")).to eq("")
     end
   end
 
@@ -30,13 +30,13 @@ describe Sandal::Enc::Alg::Direct do
     it "returns the pre-shared content key when the value to decrypt is nil" do
       key = "a pre-shared key"
       alg = Sandal::Enc::Alg::Direct.new(key)
-      alg.decrypt_key(nil).should == key
+      expect(alg.decrypt_key(nil)).to eq(key)
     end
 
     it "returns the pre-shared content key when the value to decrypt is empty" do
       key = "my pre-shared key"
       alg = Sandal::Enc::Alg::Direct.new(key)
-      alg.decrypt_key("").should == key
+      expect(alg.decrypt_key("")).to eq(key)
     end
 
     it "raises an InvalidTokenError if the value to decrypt is not nil or empty" do

@@ -8,7 +8,7 @@ shared_examples "signing and validation" do |enc_class|
     key = "A secret key"
     signer = enc_class.new(key)
     signature = signer.sign(data)
-    signer.valid?(signature, data).should == true
+    expect(signer.valid?(signature, data)).to eq(true)
   end
 
   context "#valid?" do
@@ -19,7 +19,7 @@ shared_examples "signing and validation" do |enc_class|
       signer = enc_class.new(key)
       signature = signer.sign(data)
       verifier = enc_class.new(key + "x")
-      verifier.valid?(signature, data).should == false
+      expect(verifier.valid?(signature, data)).to eq(false)
     end
 
     it "fails to validate the signature when the signature is changed" do
@@ -27,7 +27,7 @@ shared_examples "signing and validation" do |enc_class|
       key = "Another secret key"
       signer = enc_class.new(key)
       signature = signer.sign(data)
-      signer.valid?(signature + "x", data).should == false
+      expect(signer.valid?(signature + "x", data)).to eq(false)
     end
 
     it "fails to validate the signature when the data is changed" do
@@ -35,7 +35,7 @@ shared_examples "signing and validation" do |enc_class|
       key = "Another secret key"
       signer = enc_class.new(key)
       signature = signer.sign(data)
-      signer.valid?(signature, data + "x").should == false
+      expect(signer.valid?(signature, data + "x")).to eq(false)
     end
 
   end
@@ -48,7 +48,7 @@ describe Sandal::Sig::HS256 do
   context "#name" do
     it "is 'HS256'" do
       enc = Sandal::Sig::HS256.new("any old key")
-      enc.name.should == "HS256"
+      expect(enc.name).to eq("HS256")
     end
   end
 
@@ -57,7 +57,7 @@ describe Sandal::Sig::HS256 do
     key = [3, 35, 53, 75, 43, 15, 165, 188, 131, 126, 6, 101, 119, 123, 166, 143, 90, 179, 40, 230, 240, 84, 201, 40, 169, 15, 132, 178, 210, 80, 46, 191, 211, 251, 90, 146, 210, 6, 71, 239, 150, 138, 180, 195, 119, 98, 61, 34, 61, 46, 33, 114, 5, 46, 79, 8, 192, 205, 154, 245, 103, 208, 128, 163].pack("C*")
     signer = Sandal::Sig::HS256.new(key)
     signature = [116, 24, 223, 180, 151, 153, 224, 37, 79, 250, 96, 125, 216, 173, 187, 186, 22, 212, 37, 77, 105, 214, 191, 240, 91, 88, 5, 88, 83, 132, 141, 121].pack("C*") 
-    signer.valid?(signature, data).should == true
+    expect(signer.valid?(signature, data)).to eq(true)
   end
 
 end
@@ -68,7 +68,7 @@ describe Sandal::Sig::HS384 do
   context "#name" do
     it "is 'HS384'" do
       enc = Sandal::Sig::HS384.new("any old key")
-      enc.name.should == "HS384"
+      expect(enc.name).to eq("HS384")
     end
   end
 
@@ -80,7 +80,7 @@ describe Sandal::Sig::HS512 do
   context "#name" do
     it "is 'HS512'" do
       enc = Sandal::Sig::HS512.new("any old key")
-      enc.name.should == "HS512"
+      expect(enc.name).to eq("HS512")
     end
   end
   
