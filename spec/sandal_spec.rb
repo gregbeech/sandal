@@ -11,23 +11,23 @@ describe Sandal do
       private_key = OpenSSL::PKey::RSA.new(2048)
       encrypter = Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(private_key.public_key))
       token = Sandal.encrypt_token(payload, encrypter, { 'zip' => 'DEF' })
-      decoded_payload = Sandal.decode_token(token) do |header| 
+      decoded_payload = Sandal.decode_token(token) do |header|
         Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(private_key))
       end
-      decoded_payload.should == payload
+      expect(decoded_payload).to eq(payload)
     end
 
     it 'raises an ArgumentError if the zip parameter is present and nil' do
       encrypter = Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(OpenSSL::PKey::RSA.new(2048)))
-      expect { 
-        Sandal.encrypt_token('any payload', encrypter, { 'zip' => nil }) 
+      expect {
+        Sandal.encrypt_token('any payload', encrypter, { 'zip' => nil })
       }.to raise_error ArgumentError, 'Invalid zip algorithm.'
     end
 
     it 'raises an ArgumentError if the zip parameter is present and not "DEF"' do
       encrypter = Sandal::Enc::A128CBC_HS256.new(Sandal::Enc::Alg::RSA1_5.new(OpenSSL::PKey::RSA.new(2048)))
-      expect { 
-        Sandal.encrypt_token('any payload', encrypter, { 'zip' => 'INVALID' }) 
+      expect {
+        Sandal.encrypt_token('any payload', encrypter, { 'zip' => 'INVALID' })
       }.to raise_error ArgumentError, 'Invalid zip algorithm.'
     end
 
@@ -35,7 +35,7 @@ describe Sandal do
 
   it 'raises a token error when the token format is invalid' do
     expect { Sandal.decode_token('not a valid token') }.to raise_error Sandal::TokenError
-  end  
+  end
 
   it 'raises a token error when the token encoding is invalid' do
     expect { Sandal.decode_token('an.invalid.token') }.to raise_error Sandal::TokenError
@@ -45,24 +45,24 @@ describe Sandal do
     payload = 'Hello, World'
     token = Sandal.encode_token(payload, nil)
     decoded_payload = Sandal.decode_token(token)
-    decoded_payload.should == payload
+    expect(decoded_payload).to eq(payload)
   end
 
   it 'encodes and decodes tokens with "none" signature' do
     payload = 'Hello, World'
     token = Sandal.encode_token(payload, Sandal::Sig::None.instance)
     decoded_payload = Sandal.decode_token(token)
-    decoded_payload.should == payload
+    expect(decoded_payload).to eq(payload)
   end
 
   it 'decodes non-JSON payloads to a String' do
     token = Sandal.encode_token('not valid json', nil)
-    Sandal.decode_token(token).class.should.kind_of? String
+    expect(Sandal.decode_token(token)).to be_kind_of String
   end
 
   it 'decodes JSON payloads to a Hash' do
     token = Sandal.encode_token({ 'valid' => 'json' }, nil)
-    Sandal.decode_token(token).class.should.kind_of? Hash
+    expect(Sandal.decode_token(token)).to be_kind_of Hash
   end
 
   it 'raises a claim error when the expiry date is far in the past' do
@@ -77,7 +77,7 @@ describe Sandal do
 
   it 'does not raise an error when the expiry date is in the past but validation is disabled' do
     token = Sandal.encode_token({ 'exp' => (Time.now - 600).to_i }, nil)
-    Sandal.decode_token(token) do |header, options| 
+    Sandal.decode_token(token) do |header, options|
       options[:ignore_exp] = true
       nil
     end
@@ -108,7 +108,7 @@ describe Sandal do
 
   it 'does not raise an error when the not-before date is in the future but validation is disabled' do
     token = Sandal.encode_token({ 'nbf' => (Time.now + 600).to_i }, nil)
-    Sandal.decode_token(token) do |header, options| 
+    Sandal.decode_token(token) do |header, options|
       options[:ignore_nbf] = true
       nil
     end
@@ -129,15 +129,15 @@ describe Sandal do
 
   it 'raises a claim error when the issuer is not valid' do
     token = Sandal.encode_token({ 'iss' => 'example.org' }, nil)
-    expect { Sandal.decode_token(token) do |header, options| 
-      options[:valid_iss] = ['example.net'] 
+    expect { Sandal.decode_token(token) do |header, options|
+      options[:valid_iss] = ['example.net']
       nil
     end }.to raise_error Sandal::ClaimError
   end
 
   it 'does not raise an error when the issuer is valid' do
     token = Sandal.encode_token({ 'iss' => 'example.org' }, nil)
-    Sandal.decode_token(token) do |header, options| 
+    Sandal.decode_token(token) do |header, options|
       options[:valid_iss] = ['example.org', 'example.com']
       nil
     end
@@ -145,32 +145,32 @@ describe Sandal do
 
   it 'raises a claim error when the audience string is not valid' do
     token = Sandal.encode_token({ 'aud' => 'example.com' }, nil)
-    expect { Sandal.decode_token(token) do |header, options| 
-      options[:valid_aud] = ['example.net'] 
+    expect { Sandal.decode_token(token) do |header, options|
+      options[:valid_aud] = ['example.net']
       nil
     end }.to raise_error Sandal::ClaimError
   end
 
   it 'raises a claim error when the audience array is not valid' do
     token = Sandal.encode_token({ 'aud' => ['example.org', 'example.com'] }, nil)
-    expect { Sandal.decode_token(token) do |header, options| 
-      options[:valid_aud] = ['example.net'] 
+    expect { Sandal.decode_token(token) do |header, options|
+      options[:valid_aud] = ['example.net']
       nil
     end }.to raise_error Sandal::ClaimError
   end
 
   it 'does not raise an error when the audience string is valid' do
     token = Sandal.encode_token({ 'aud' => 'example.net' }, nil)
-    Sandal.decode_token(token) do |header, options| 
-      options[:valid_aud] = ['example.net'] 
+    Sandal.decode_token(token) do |header, options|
+      options[:valid_aud] = ['example.net']
       nil
     end
   end
 
   it 'does not raise an error when the audience array is valid' do
     token = Sandal.encode_token({ 'aud' => ['example.com', 'example.net'] }, nil)
-    Sandal.decode_token(token) do |header, options| 
-      options[:valid_aud] = ['example.net'] 
+    Sandal.decode_token(token) do |header, options|
+      options[:valid_aud] = ['example.net']
       nil
     end
   end
@@ -180,7 +180,7 @@ describe Sandal do
     private_key = OpenSSL::PKey::RSA.generate(2048)
     token = Sandal.encode_token(payload, Sandal::Sig::RS256.new(private_key))
     decoded_payload = Sandal.decode_token(token) { |header| Sandal::Sig::RS256.new(private_key.public_key) }
-    decoded_payload.should == payload
+    expect(decoded_payload).to eq(payload)
   end
 
   it 'encodes and decodes tokens with RS384 signatures' do
@@ -188,7 +188,7 @@ describe Sandal do
     private_key = OpenSSL::PKey::RSA.generate(2048)
     token = Sandal.encode_token(payload, Sandal::Sig::RS384.new(private_key))
     decoded_payload = Sandal.decode_token(token) { |header| Sandal::Sig::RS384.new(private_key.public_key) }
-    decoded_payload.should == payload
+    expect(decoded_payload).to eq(payload)
   end
 
   it 'encodes and decodes tokens with RS512 signatures' do
@@ -196,7 +196,7 @@ describe Sandal do
     private_key = OpenSSL::PKey::RSA.generate(2048)
     token = Sandal.encode_token(payload, Sandal::Sig::RS512.new(private_key))
     decoded_payload = Sandal.decode_token(token) { |header| Sandal::Sig::RS512.new(private_key.public_key) }
-    decoded_payload.should == payload
+    expect(decoded_payload).to eq(payload)
   end
 
 end

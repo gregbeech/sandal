@@ -16,44 +16,44 @@ shared_examples "signing and validation" do |enc_class|
 
   it "can sign data and validate signatures" do
     data = "some data to sign"
-    group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME) 
+    group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME)
     private_key = OpenSSL::PKey::EC.new(group).generate_key
     signer = enc_class.new(private_key)
     signature = signer.sign(data)
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = private_key.public_key
     validator = enc_class.new(public_key)
-    validator.valid?(signature, data).should == true
+    expect(validator.valid?(signature, data)).to eq(true)
   end
 
   it "can use DER-encoded keys to sign data and validate signatures" do
     data = "some data to sign"
-    group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME) 
+    group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME)
     private_key = OpenSSL::PKey::EC.new(group).generate_key
     signer = enc_class.new(private_key.to_der)
     signature = signer.sign(data)
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = private_key.public_key
     validator = enc_class.new(public_key.to_der)
-    validator.valid?(signature, data).should == true
+    expect(validator.valid?(signature, data)).to eq(true)
   end
 
   it "can use PEM-encoded keys to sign data and validate signatures" do
     data = "some data to sign"
-    group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME) 
+    group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME)
     private_key = OpenSSL::PKey::EC.new(group).generate_key
     signer = enc_class.new(private_key.to_pem)
     signature = signer.sign(data)
     public_key = OpenSSL::PKey::EC.new(group)
     public_key.public_key = private_key.public_key
     validator = enc_class.new(public_key.to_pem)
-    validator.valid?(signature, data).should == true
+    expect(validator.valid?(signature, data)).to eq(true)
   end
 
   context "#initialize" do
 
     it "raises an argument error if the key has the wrong curve" do
-      group = OpenSSL::PKey::EC::Group.new("secp224k1") 
+      group = OpenSSL::PKey::EC::Group.new("secp224k1")
       private_key = OpenSSL::PKey::EC.new(group).generate_key
       expect { enc_class.new(private_key) }.to raise_error ArgumentError
     end
@@ -62,39 +62,39 @@ shared_examples "signing and validation" do |enc_class|
 
   context "#valid?" do
 
-    it "fails to validate the signature when the key is changed" do 
+    it "fails to validate the signature when the key is changed" do
       data = "some data to sign"
-      group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME) 
+      group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME)
       private_key = OpenSSL::PKey::EC.new(group).generate_key
       signer = enc_class.new(private_key)
       signature = signer.sign(data)
       public_key = OpenSSL::PKey::EC.new(group).generate_key
       validator = enc_class.new(public_key)
-      validator.valid?(signature, data).should == false
+      expect(validator.valid?(signature, data)).to eq(false)
     end
 
-    it "fails to validate the signature when the signature is changed" do 
+    it "fails to validate the signature when the signature is changed" do
       data = "some data to sign"
-      group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME) 
+      group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME)
       private_key = OpenSSL::PKey::EC.new(group).generate_key
       signer = enc_class.new(private_key)
       signature = signer.sign(data)
       public_key = OpenSSL::PKey::EC.new(group)
       public_key.public_key = private_key.public_key
       validator = enc_class.new(public_key)
-      validator.valid?(signature + "x", data).should == false
+      expect(validator.valid?(signature + "x", data)).to eq(false)
     end
 
-    it "fails to validate the signature when the data is changed" do 
+    it "fails to validate the signature when the data is changed" do
       data = "some data to sign"
-      group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME) 
+      group = OpenSSL::PKey::EC::Group.new(enc_class::CURVE_NAME)
       private_key = OpenSSL::PKey::EC.new(group).generate_key
       signer = enc_class.new(private_key)
       signature = signer.sign(data)
       public_key = OpenSSL::PKey::EC.new(group)
       public_key.public_key = private_key.public_key
       validator = enc_class.new(public_key)
-      validator.valid?(signature, data + "x").should == false
+      expect(validator.valid?(signature, data + "x")).to eq(false)
     end
 
   end
@@ -110,7 +110,7 @@ describe Sandal::Sig::ES do
       s = make_bn([197, 10, 7, 211, 140, 60, 112, 229, 216, 241, 45, 175, 8, 74, 84, 128, 166, 101, 144, 197, 242, 147, 80, 154, 143, 63, 127, 138, 131, 163, 84, 213])
       signature = Sandal::Sig::ES.encode_jws_signature(r, s, 256)
       base64_signature = Sandal::Util.jwt_base64_encode(signature)
-      base64_signature.should == "DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
+      expect(base64_signature).to eq("DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q")
     end
 
     it "can encode the signature in JWS draft-11 appendix 4" do
@@ -118,7 +118,7 @@ describe Sandal::Sig::ES do
       s = make_bn([0, 111, 6, 105, 44, 5, 41, 208, 128, 61, 152, 40, 92, 61, 152, 4, 150, 66, 60, 69, 247, 196, 170, 81, 193, 199, 78, 59, 194, 169, 16, 124, 9, 143, 42, 142, 131, 48, 206, 238, 34, 175, 83, 203, 220, 159, 3, 107, 155, 22, 27, 73, 111, 68, 68, 21, 238, 144, 229, 232, 148, 188, 222, 59, 242, 103])
       signature = Sandal::Sig::ES.encode_jws_signature(r, s, 521)
       base64_signature = Sandal::Util.jwt_base64_encode(signature)
-      base64_signature.should == "AdwMgeerwtHoh-l192l60hp9wAHZFVJbLfD_UxMi70cwnZOYaRI1bKPWROc-mZZqwqT2SI-KGDKB34XO0aw_7XdtAG8GaSwFKdCAPZgoXD2YBJZCPEX3xKpRwcdOO8KpEHwJjyqOgzDO7iKvU8vcnwNrmxYbSW9ERBXukOXolLzeO_Jn"
+      expect(base64_signature).to eq("AdwMgeerwtHoh-l192l60hp9wAHZFVJbLfD_UxMi70cwnZOYaRI1bKPWROc-mZZqwqT2SI-KGDKB34XO0aw_7XdtAG8GaSwFKdCAPZgoXD2YBJZCPEX3xKpRwcdOO8KpEHwJjyqOgzDO7iKvU8vcnwNrmxYbSW9ERBXukOXolLzeO_Jn")
     end
 
   end
@@ -131,7 +131,7 @@ describe Sandal::Sig::ES256 do
   context "#name" do
     it "is 'ES256'" do
       enc = Sandal::Sig::ES256.new(OpenSSL::PKey::EC.new("prime256v1").generate_key)
-      enc.name.should == "ES256"
+      expect(enc.name).to eq("ES256")
     end
   end
 
@@ -144,11 +144,11 @@ describe Sandal::Sig::ES256 do
       data = "eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ"
       signature = Sandal::Util.jwt_base64_decode("DtEhU3ljbEg8L38VWAfUAqOyKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q")
 
-      group = OpenSSL::PKey::EC::Group.new("prime256v1") 
+      group = OpenSSL::PKey::EC::Group.new("prime256v1")
       public_key = OpenSSL::PKey::EC.new(group)
       public_key.public_key = make_point(group, x, y)
       validator = Sandal::Sig::ES256.new(public_key)
-      validator.valid?(signature, data).should == true
+      expect(validator.valid?(signature, data)).to eq(true)
     end
 
   end
@@ -161,7 +161,7 @@ describe Sandal::Sig::ES384 do
   context "#name" do
     it "is 'ES384'" do
       enc = Sandal::Sig::ES384.new(OpenSSL::PKey::EC.new("secp384r1").generate_key)
-      enc.name.should == "ES384"
+      expect(enc.name).to eq("ES384")
     end
   end
 
@@ -173,7 +173,7 @@ describe Sandal::Sig::ES512 do
   context "#name" do
     it "is 'ES512'" do
       enc = Sandal::Sig::ES512.new(OpenSSL::PKey::EC.new("secp521r1").generate_key)
-      enc.name.should == "ES512"
+      expect(enc.name).to eq("ES512")
     end
   end
 
@@ -186,11 +186,11 @@ describe Sandal::Sig::ES512 do
       data = "eyJhbGciOiJFUzUxMiJ9.UGF5bG9hZA"
       signature = Sandal::Util.jwt_base64_decode("AdwMgeerwtHoh-l192l60hp9wAHZFVJbLfD_UxMi70cwnZOYaRI1bKPWROc-mZZqwqT2SI-KGDKB34XO0aw_7XdtAG8GaSwFKdCAPZgoXD2YBJZCPEX3xKpRwcdOO8KpEHwJjyqOgzDO7iKvU8vcnwNrmxYbSW9ERBXukOXolLzeO_Jn")
 
-      group = OpenSSL::PKey::EC::Group.new("secp521r1") 
+      group = OpenSSL::PKey::EC::Group.new("secp521r1")
       public_key = OpenSSL::PKey::EC.new(group)
       public_key.public_key = make_point(group, x, y)
       validator = Sandal::Sig::ES512.new(public_key)
-      validator.valid?(signature, data).should == true
+      expect(validator.valid?(signature, data)).to eq(true)
     end
 
   end

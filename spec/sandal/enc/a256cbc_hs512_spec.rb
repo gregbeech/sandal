@@ -11,7 +11,7 @@ describe Sandal::Enc::A256CBC_HS512 do
   context "#name" do
     it "is 'A256CBC-HS512'" do
       enc = Sandal::Enc::A256CBC_HS512.new(Sandal::Enc::Alg::Direct.new("a cmk"))
-      enc.name.should == "A256CBC-HS512"
+      expect(enc.name).to eq("A256CBC-HS512")
     end
   end
 

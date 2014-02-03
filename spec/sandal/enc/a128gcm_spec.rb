@@ -11,7 +11,7 @@ describe Sandal::Enc::A128GCM do
   context "#name" do
     it "is 'A128GCM'" do
       enc = Sandal::Enc::A128GCM.new(Sandal::Enc::Alg::Direct.new("a cmk"))
-      enc.name.should == "A128GCM"
+      expect(enc.name).to eq("A128GCM")
     end
   end
 

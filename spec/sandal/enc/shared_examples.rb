@@ -9,7 +9,7 @@ shared_examples "algorithm compatibility" do |enc_class|
     enc = enc_class.new(Sandal::Enc::Alg::Direct.new(content_encryption_key))
     token = enc.encrypt("", payload)
     output = enc.decrypt(token)
-    output.should == payload
+    expect(output).to eq(payload)
   end
 
   it "can encrypt and decrypt tokens with the RSA1_5 algorithm" do
@@ -19,7 +19,7 @@ shared_examples "algorithm compatibility" do |enc_class|
     token = encrypter.encrypt("", payload)
     decrypter = enc_class.new(Sandal::Enc::Alg::RSA1_5.new(rsa))
     output = decrypter.decrypt(token)
-    output.should == payload
+    expect(output).to eq(payload)
   end
 
   it "can encrypt and decrypt tokens with the RSA-OAEP algorithm" do
@@ -29,7 +29,7 @@ shared_examples "algorithm compatibility" do |enc_class|
     token = encrypter.encrypt("", payload)
     decrypter = enc_class.new(Sandal::Enc::Alg::RSA_OAEP.new(rsa))
     output = decrypter.decrypt(token)
-    output.should == payload
+    expect(output).to eq(payload)
   end
 
 end
