@@ -28,5 +28,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "redcarpet", ">= 2.2" unless RUBY_PLATFORM == "java" # for yard
   s.add_development_dependency "kramdown", ">= 1.0" if RUBY_PLATFORM == "java"      # for yard
 
-  s.requirements << "openssl 1.0.1c for EC signature methods"
+  s.requirements << "OpenSSL 1.0.1c for EC signature methods (1.0.1f recommended)"
 end
