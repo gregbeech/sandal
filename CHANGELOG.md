@@ -1,3 +1,20 @@
+## 0.5.2 (03 January 2014)
+
+Improvements:
+
+- RSpec assertions now use 3.x syntax (thanks to [@petergoldstein](https://github.com/petergoldstein))
+- MultiJson is now an optional dependency (thanks [@petergoldstein](https://github.com/petergoldstein))
+
+## 0.5.1 (11 June 2013)
+
+Bug fixes:
+
+- Fixed some loading errors when using the library with Sinatra.
+
+Breaking changes:
+
+- Methods on the `Sandal::Util` module are now static rather than being designed to be mixed in.
+
 ## 0.5.0 (07 June 2013)
 
 Features:
