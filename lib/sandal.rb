@@ -177,7 +177,7 @@ module Sandal
       end
     end
 
-    if header["cty"] == "JWT"
+    if header.has_key?("cty") && header["cty"] =~ /\AJWT\Z/i
       if depth > 0
         if block_given?
           decode_token(payload, depth - 1, &Proc.new)

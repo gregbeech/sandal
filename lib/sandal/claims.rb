@@ -85,7 +85,7 @@ module Sandal
         begin
           Time.at(claim)
         rescue
-          raise Sandal::ClaimError, "The "#{name}" claim is invalid."
+          raise Sandal::ClaimError, "The \"#{name}\" claim is invalid."
         end
       end
     end
