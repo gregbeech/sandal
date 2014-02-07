@@ -1,45 +1,58 @@
+# Sandal Change Log
+
+## 0.6.0
+
+### Breaking Changes
+
+- The base64 encode/decode routines have moved from `Sandal::Util` to `Sandal::Base64`.
+
+### Improvements
+
+- Added support for Ruby 2.1 (it worked anyway, but now it's officially supported).
+- MultiJson dependency has now been removed entirely.
+
 ## 0.5.2 (03 January 2014)
 
-Improvements:
+### Improvements
 
-- RSpec assertions now use 3.x syntax (thanks to [@petergoldstein](https://github.com/petergoldstein))
+- RSpec assertions now use 3.x syntax (thanks [@petergoldstein](https://github.com/petergoldstein))
 - MultiJson is now an optional dependency (thanks [@petergoldstein](https://github.com/petergoldstein))
 
 ## 0.5.1 (11 June 2013)
 
-Bug fixes:
+### Bug Fixes
 
 - Fixed some loading errors when using the library with Sinatra.
 
-Breaking changes:
+### Breaking Changes
 
 - Methods on the `Sandal::Util` module are now static rather than being designed to be mixed in.
 
 ## 0.5.0 (07 June 2013)
 
-Features:
+### Breaking Changes
+
+- Tokens are not backwards compatible with previous versions of the library due to changes in the specification.
+- Dropped support for Ruby 1.9.2; supported platforms are now 1.9.3, 2.0.0, JRuby (head) and Rubinius (head).
+
+### Features
 
 - Updated to JWT draft-08 specification, and corresponding JWE, JWS and JWA drafts.
 - Added a KeyError class for when invalid keys are given to the library.
 - Added an ExpiredTokenError class to make handling the common case of expired tokens easier.
 - Added a NAME constant to all classes with a JWA name to save user having to hard-code the name string.
 
-Breaking changes:
-
-- Tokens are not backwards compatible with previous versions of the library due to changes in the specification.
-- Dropped support for Ruby 1.9.2; supported platforms are now 1.9.3, 2.0.0, JRuby (head) and Rubinius (head).
-
 ## 0.4.0 (30 April 2013)
 
-Features:
-
-- The decode_token method now recursively decodes/decrypts nested tokens rather than requiring multiple calls.
-
-Breaking changes:
+### Breaking Changes
 
 - The decode_token method is now used for both signed and encrypted tokens; the decrypt_token method has been removed.
 
-Bug fixes:
+### Features
+
+- The decode_token method now recursively decodes/decrypts nested tokens rather than requiring multiple calls.
+
+### Bug Fixes
 
 - The 'none' algorithm value is now always set in plaintext tokens.
 - The zip parameter is now used when encrypting/decrypting JWE tokens.
@@ -48,15 +61,15 @@ Bug fixes:
 
 ## 0.3.0 (20 April 2013)
 
-Features:
-
-- Keys can now be passed as strings as well as OpenSSL types.
-
-Breaking changes:
+### Breaking Changes
 
 - Default options have changed so that the behaviour is consistent with no options being passed.
 
-Bug fixes:
+### Features
+
+- Keys can now be passed as strings as well as OpenSSL types.
+
+### Bug Fixes
 
 - Strings are now compared by codepoint rather than by byte, in accordance with JWS § 5.3.
 - Integrity value check in AES/CBC+HS algorithms now uses the constant time string comparison function rather than ==.
@@ -64,24 +77,24 @@ Bug fixes:
 
 ## 0.2.0 (05 April 2013)
 
-Features:
+### Features
 
 - Added support for AES/CBC and AES/GCM encryption methods.
 - Added RSA1_5, RSA-OAEP and direct key protection algorithms.
 
-Bug fixes:
+### Bug Fixes
 
 - Sandal::Sig::ES class is now not included in jruby as ECDSA isn't supported.
 
 ## 0.1.1 (01 April 2013)
 
-Features:
+### Features
 
 - Changed from json to multi_json gem for improved compatibility.
 - New Claims module can add claims validation functionality to Hash-like objects.
 - New ClaimError type for claim validation errors.
 
-Bug fixes:
+### Bug Fixes
 
 - Base64 decoding now ensures there is no padding before decoding.
 
@@ -89,7 +102,7 @@ Bug fixes:
 
 The first version worth using.
 
-Features:
+### Features
 
 - Supports all JWA signature algorithms (ES, HS, RS, none).
 - Validates exp, nbf, iss and aud claims.

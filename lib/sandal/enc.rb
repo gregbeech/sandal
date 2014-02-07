@@ -12,7 +12,7 @@ module Sandal
     def self.token_parts(token)
       parts = token.is_a?(Array) ? token : token.split(".")
       raise ArgumentError unless parts.length == 5
-      decoded_parts = parts.map { |part| Sandal::Util.jwt_base64_decode(part) }
+      decoded_parts = Sandal::Base64.decode(parts)
       return parts, decoded_parts
     rescue ArgumentError
       raise Sandal::InvalidTokenError, "Invalid token encoding."

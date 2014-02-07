@@ -1,6 +1,7 @@
 require "openssl"
 require "zlib"
 require "sandal/version"
+require "sandal/base64"
 require "sandal/claims"
 require "sandal/enc"
 require "sandal/json"
@@ -95,37 +96,34 @@ module Sandal
     end
   end
 
-  # Creates a signed JSON Web Token.
+  # Creates a signed JSON Web Token using the compact serialisation.
   #
   # @param payload [String or Hash] The payload of the token. Hashes will be encoded as JSON.
   # @param signer [#name,#sign] The token signer, which may be nil for an unsigned token.
   # @param header_fields [Hash] Header fields for the token (note: do not include "alg").
   # @return [String] A signed JSON Web Token.
-  def self.encode_token(payload, signer, header_fields = nil)
+  def self.encode(payload, signer, header_fields = nil)
     signer ||= Sandal::Sig::NONE
 
-    header = {}
-    header["alg"] = signer.name
+    header = { "alg" => signer.name }
     header = header_fields.merge(header) if header_fields
     header = Sandal::Json.dump(header)
 
     payload = Sandal::Json.dump(payload) unless payload.is_a?(String)
 
-    sec_input = [header, payload].map { |p| Sandal::Util.jwt_base64_encode(p) }.join(".")
+    sec_input = Sandal::Base64.encode([header, payload]).join(".")
     signature = signer.sign(sec_input)
-    [sec_input, Sandal::Util.jwt_base64_encode(signature)].join(".")
+    [sec_input, Sandal::Base64.encode(signature)].join(".")
   end
 
-  # Creates an encrypted JSON Web Token.
+  # Creates an encrypted JSON Web Token using the compact serialisation.
   #
   # @param payload [String] The payload of the token.
   # @param encrypter [#name,#alg,#encrypt] The token encrypter.
-  # @param header_fields [Hash] Header fields for the token (note: do not include "alg" or "enc").
+  # @param header_fields [Hash] Header fields for the token (note: do not include "enc" or "alg").
   # @return [String] An encrypted JSON Web Token.
-  def self.encrypt_token(payload, encrypter, header_fields = nil)
-    header = {}
-    header["enc"] = encrypter.name
-    header["alg"] = encrypter.alg.name
+  def self.encrypt(payload, encrypter, header_fields = nil)
+    header = { "enc" => encrypter.name, "alg" => encrypter.alg.name }
     header = header_fields.merge(header) if header_fields
 
     if header.has_key?("zip")
@@ -154,7 +152,7 @@ module Sandal
   #   token is encrypted.
   # @return [Hash or String] The payload of the token as a Hash if it was JSON, otherwise as a String.
   # @raise [Sandal::TokenError] The token is invalid or not supported.
-  def self.decode_token(token, depth = 16)
+  def self.decode(token, depth = 16)
     parts = token.split(".")
     decoded_parts = decode_token_parts(parts)
     header = decoded_parts[0]
@@ -192,6 +190,13 @@ module Sandal
     end
   end
 
+  # legacy method name support
+  class << self
+    alias_method :encode_token, :encode
+    alias_method :encrypt_token, :encrypt
+    alias_method :decode_token, :decode
+  end
+
   private
 
   # Decodes and validates a signed JSON Web Token.
@@ -205,7 +210,7 @@ module Sandal
 
   # Decodes the parts of a token.
   def self.decode_token_parts(parts)
-    parts = parts.map { |part| Sandal::Util.jwt_base64_decode(part) }
+    parts = Sandal::Base64.decode(parts)
     parts[0] = Sandal::Json.load(parts[0])
     parts
   rescue
