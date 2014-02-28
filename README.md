@@ -114,6 +114,15 @@ Sandal.default! ignore_signature: true, ignore_exp: true
 
 These options can also be configured on a per-token basis by using a second `options` parameter in the block passed to the `decode` method.
 
+Note that by default the library requires that the innermost token is signed as this is the most secure option. To enable decoding tokens that don't meet this policy you can disable it as shown below, although I'd strongly recommend that you just allow the token to be rejected!
+
+```ruby
+payload = Sandal.decode_token(unsafe_token) do |header, options|
+  options[:signature_policy] = :none
+  Sandal::Sig::NONE
+end
+```
+
 ## Contributing
 
 1. Fork it

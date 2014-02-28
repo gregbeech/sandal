@@ -50,6 +50,10 @@ module Sandal
   # max_clock_skew:: 
   #   The maximum clock skew, in seconds, when validating times. If your server time is out of sync with the token
   #   server then this can be increased to take that into account. It probably shouldn't be more than about 300.
+  # signature_policy::
+  #   The policy for requiring signatures in tokens. The possible values are:
+  #   - :strict (default) - The innermost token must be signed. This is the recommended policy.
+  #   - :none - No signature is required. This _really_ isn't recommended.
   # valid_iss:: 
   #   A list of valid token issuers, if validation of the issuer claim is required.
   # valid_aud:: 
@@ -59,6 +63,7 @@ module Sandal
     ignore_nbf: false,
     ignore_signature: false,
     max_clock_skew: 0,
+    signature_policy: :strict,
     valid_iss: [],
     valid_aud: []
   }
@@ -188,6 +193,9 @@ module Sandal
         payload
       end
     else
+      if options[:signature_policy] == :strict && !is_signed?(parts)
+        raise Sandal::UnsupportedTokenError, "The innermost token is not signed."
+      end
       parse_and_validate(payload, options)
     end
   end
@@ -196,10 +204,10 @@ module Sandal
 
   # Decodes and validates a signed JSON Web Token.
   def self.validate_signature(parts, signature, validator)
-    validator ||= Sandal::Sig::NONE
+    raise UnsupportedTokenError, "Unsupported signature method." if validator.nil?
     secured_input = parts.take(2).join(".")
     unless validator.valid?(signature, secured_input)
-      raise TokenError, "Invalid signature."
+      raise InvalidTokenError, "Invalid signature."
     end
   end
 
@@ -209,7 +217,7 @@ module Sandal
     parts[0] = Sandal::Json.load(parts[0])
     parts
   rescue
-    raise TokenError, "Invalid token encoding."
+    raise InvalidTokenError, "Invalid token encoding."
   end
 
   # Parses the content of a token and validates the claims if is JSON claims.

@@ -1,3 +1,9 @@
+## 0.6.0 (28 February 2014)
+
+Breaking changes:
+
+- Changed the behaviour around unsigned tokens so that they are rejected by default, to make the default settings more secure.
+
 ## 0.5.2 (03 January 2014)
 
 Improvements:
