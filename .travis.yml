@@ -1,11 +1,11 @@
 language: ruby
 rvm:
-  - 2.1.0
+  - 2.1.2
   - 2.0.0
   - 1.9.3
   - jruby-19mode
-  - rbx
+  - rbx-2
 matrix:
   allow_failures:
-    - rvm: rbx
+    - rvm: rbx-2
 cache: bundler
