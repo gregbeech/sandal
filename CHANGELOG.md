@@ -1,3 +1,12 @@
+# Change Log
+
+## 0.7.0 (5 October 2014)
+
+Breaking changes:
+
+- Removed the `jwt_` prefix from methods on the `Sandal::Util` module.
+- Removed `JSON` and just use the built-in `JSON` module.
+
 ## 0.6.0 (28 February 2014)
 
 Breaking changes:

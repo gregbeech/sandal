@@ -17,7 +17,7 @@ module Sandal
     # @param a [String] The first string.
     # @param b [String] The second string.
     # @return [Boolean] true if the strings are equal; otherwise false.
-    def self.jwt_strings_equal?(a, b)
+    def self.strings_equal?(a, b)
       return true if a.object_id == b.object_id
       return false if a.nil? || b.nil? || a.length != b.length
       a.codepoints.zip(b.codepoints).reduce(0) { |r, (x, y)| r |= x ^ y } == 0
@@ -27,7 +27,7 @@ module Sandal
     #
     # @param s [String] The string to encode.
     # @return [String] The encoded base64 string.
-    def self.jwt_base64_encode(s)
+    def self.base64_encode(s)
       Base64.urlsafe_encode64(s).gsub(/=+$/, "")
     end
 
@@ -36,7 +36,7 @@ module Sandal
     # @param s [String] The base64 string to decode.
     # @return [String] The decoded string.
     # @raise [ArgumentError] The base64 string is invalid or contains padding.
-    def self.jwt_base64_decode(s)
+    def self.base64_decode(s)
       if s.end_with?("=")
         raise ArgumentError, "Base64 strings must not contain padding."
       end

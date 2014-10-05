@@ -1,9 +1,9 @@
+require "json"
 require "openssl"
 require "zlib"
 require "sandal/version"
 require "sandal/claims"
 require "sandal/enc"
-require "sandal/json"
 require "sandal/sig"
 require "sandal/util"
 
@@ -112,13 +112,13 @@ module Sandal
     header = {}
     header["alg"] = signer.name
     header = header_fields.merge(header) if header_fields
-    header = Sandal::Json.dump(header)
+    header = JSON.generate(header)
 
-    payload = Sandal::Json.dump(payload) unless payload.is_a?(String)
+    payload = JSON.generate(payload) unless payload.is_a?(String)
 
-    sec_input = [header, payload].map { |p| Sandal::Util.jwt_base64_encode(p) }.join(".")
+    sec_input = [header, payload].map { |p| Sandal::Util.base64_encode(p) }.join(".")
     signature = signer.sign(sec_input)
-    [sec_input, Sandal::Util.jwt_base64_encode(signature)].join(".")
+    [sec_input, Sandal::Util.base64_encode(signature)].join(".")
   end
 
   # Creates an encrypted JSON Web Token.
@@ -140,7 +140,7 @@ module Sandal
       payload = Zlib::Deflate.deflate(payload, Zlib::BEST_COMPRESSION)
     end 
 
-    encrypter.encrypt(Sandal::Json.dump(header), payload)
+    encrypter.encrypt(JSON.generate(header), payload)
   end
 
   # Decodes and validates a signed and/or encrypted JSON Web Token, recursing into any nested tokens, and returns the 
@@ -213,8 +213,8 @@ module Sandal
 
   # Decodes the parts of a token.
   def self.decode_token_parts(parts)
-    parts = parts.map { |part| Sandal::Util.jwt_base64_decode(part) }
-    parts[0] = Sandal::Json.load(parts[0])
+    parts = parts.map { |part| Sandal::Util.base64_decode(part) }
+    parts[0] = JSON.parse(parts[0])
     parts
   rescue
     raise InvalidTokenError, "Invalid token encoding."
@@ -222,7 +222,7 @@ module Sandal
 
   # Parses the content of a token and validates the claims if is JSON claims.
   def self.parse_and_validate(payload, options)
-    claims = Sandal::Json.load(payload) rescue nil
+    claims = JSON.parse(payload) rescue nil
     if claims
       claims.extend(Sandal::Claims).validate_claims(options)
     else

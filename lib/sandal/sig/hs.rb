@@ -35,7 +35,7 @@ module Sandal
       # @param payload [String] The payload of the token.
       # @return [Boolean] true if the signature is correct; otherwise false.
       def valid?(signature, payload)
-        Sandal::Util.jwt_strings_equal?(sign(payload), signature)
+        Sandal::Util.strings_equal?(sign(payload), signature)
       end
 
     end
